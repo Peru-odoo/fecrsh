@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 
 CABYS_URI = "https://api.hacienda.go.cr/fe/cabys"
 QUERY = "*"
-QUERY_MAX = 30000  # TODO Remove hardcoded
+QUERY_MAX = 50000  # TODO Remove hardcoded
 CABYS_INTERN_FROM_OFFICIAL = {
     "code": "codigo",
     "description": "descripcion",
@@ -23,16 +23,16 @@ class CAByS(models.Model):
 
     name = fields.Char(
         compute="_compute_name",
-        index=True,
         store=True,
     )
     code = fields.Char(
         index=True,
-        required=True,
+        store=True,
+        copy=False
     )
     description = fields.Char(
-        index=True,
         required=True,
+        store=True
     )
     tax_percentage = fields.Float()
     tax_id = fields.Many2one(

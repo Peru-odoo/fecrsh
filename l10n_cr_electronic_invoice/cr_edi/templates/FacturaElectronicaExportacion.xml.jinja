@@ -39,7 +39,7 @@
     </Receptor>
     <CondicionVenta>{{document.invoice_payment_term_id.sale_conditions_id.sequence}}</CondicionVenta>
     <PlazoCredito>{{document.invoice_payment_term_id.line_ids[0].days}}</PlazoCredito>
-    <MedioPago>{{document.payment_methods_id.sequence}}</MedioPago>
+    <MedioPago>{{document.payment_method_id.sequence}}</MedioPago>
     <DetalleServicio>
         {% set line_number = 0 %} {% for line in lines %}
         <LineaDetalle>
@@ -62,6 +62,14 @@
                 <CodigoTarifa>{{tax.iva_tax_code}}</CodigoTarifa>
                 <Tarifa>{{tax.amount}}</Tarifa>
                 <Monto>{{(line.price_subtotal * tax.amount / 100)|round(5)}}</Monto>
+                <Exoneracion>
+                <TipoDocumento>04</TipoDocumento>
+                    <NumeroDocumento>AL-00447008-20</NumeroDocumento>
+                    <NombreInstitucion>Dirección General de Hacienda</NombreInstitucion>
+                    <FechaEmision>2020-11-06T00:00:00-06:00</FechaEmision>
+                    <PorcentajeExoneracion>11</PorcentajeExoneracion>
+                    <MontoExoneracion>11.00</MontoExoneracion>
+                </Exoneracion>
             </Impuesto>
             {% endfor %}
             <ImpuestoNeto>{{line.total_tax}}</ImpuestoNeto>

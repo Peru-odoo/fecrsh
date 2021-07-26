@@ -10,16 +10,20 @@ TYPES = {
 class PosConfig(models.Model):
     _inherit = "pos.config"
 
-    sucursal = fields.Integer(string="Sucursal",required=False,default="1")
-    terminal = fields.Integer(string="Terminal",required=False,default="1")
-    sequence_fe_id = fields.Many2one(comodel_name="ir.sequence",string=u"Secuencia Factura Electrónica",required=False)
-    sequence_nc_id = fields.Many2one(oldname="return_sequence_id",comodel_name="ir.sequence",string=u"Secuencia Notas de Crédito Electrónica",required=False)
-    sequence_te_id = fields.Many2one(comodel_name="ir.sequence",string=u"Secuencia Tiquete Electrónico",required=False,)
+    sucursal = fields.Integer(string="Sucursal", required=False, copy=False)
+    terminal = fields.Integer(string="Terminal", required=False, copy=False)
+    sequence_fe_id = fields.Many2one(comodel_name="ir.sequence", string=u"Secuencia Factura Electrónica",
+                                     required=False, copy=False)
+    sequence_nc_id = fields.Many2one(oldname="return_sequence_id", comodel_name="ir.sequence",
+                                     string=u"Secuencia Notas de Crédito Electrónica", required=False, copy=False)
+    sequence_te_id = fields.Many2one(comodel_name="ir.sequence", string=u"Secuencia Tiquete Electrónico",
+                                     required=False, copy=False)
 
-    _sql_constraints = [
-        ('sucursal_company_uniq', 'unique (sucursal, terminal, company_id)',
-         u'La sucursal debe ser única por compañia!'),
-    ]
+    # _sql_constraints = [
+    #     ('sucursal_company_uniq', 'unique (sucursal, terminal, company_id)',
+    #      u'La sucursal debe ser única por compañia!'),
+    # ]
+
 
     @api.model
     def set_sequences(self):

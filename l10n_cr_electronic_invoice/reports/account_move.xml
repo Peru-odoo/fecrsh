@@ -19,10 +19,19 @@
                 </div>
             </div>
             <div class="page">
+                 <h2 style="display:none">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Factura</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Factura borrador</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Factura cancelada</span>
+                    <span t-if="o.move_type == 'out_refund'">Nota de crédito</span>
+                    <span t-if="o.move_type == 'in_refund'">Nota de crédito proveedor</span>
+                    <span t-if="o.move_type == 'in_invoice'">Factura de proveedor</span>
+                    <span t-if="o.name != '/'" t-field="o.name"/>
+                </h2>
                 <table style="width: 100%;">
                     <h2 t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Draft Invoice</h2>
 
-                    <div t-if="o.move_type == 'out_invoice' and o.state in ('open', 'in_payment', 'paid')">
+                    <div t-if="o.move_type == 'out_invoice' and o.state in ('posted')">
                         <tr>
                             <th colspan="6">Datos del documento</th>
                         </tr>
@@ -62,7 +71,7 @@
                             <td/>
                             <td class="field_label">Medio de Pago:</td>
                             <td>
-                                <span t-field="o.payment_methods_id"/>
+                                <span t-field="o.payment_method_id"/>
                             </td>
                         </tr>
                         <tr>

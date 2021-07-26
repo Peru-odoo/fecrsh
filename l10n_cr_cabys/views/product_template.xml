@@ -7,6 +7,8 @@
         <field name="arch" type="xml">
             <field name="type" position="after">
                 <field name="cabys_id" attrs="{'required': True}"/>
+                <field name="tax_cabys" attrs="{'readonly': True}" force_save="1" invisible="1"/>
+                <field name="code_cabys" invisible="1"/>
             </field>
         </field>
     </record>

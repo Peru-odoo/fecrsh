@@ -1,6 +1,6 @@
 {
     "name": "L10N CR CAByS",
-    "version": "14.0.0.1.0",
+    "version": "2.1",
     "author": "HomebrewSoft",
     "website": "https://homebrewsoft.dev",
     "license": "LGPL-3",
