@@ -1,6 +1,6 @@
 {
     "name": "L10N CR Import",
-    "version": "2.3",
+    "version": "14.0.0.3",
     "author": "HomebrewSoft",
     "website": "https://homebrewsoft.dev",
     "license": "LGPL-3",
@@ -23,6 +23,6 @@
         "views/account_move.xml",
         "views/account_journal.xml",
         "views/reference_document_views.xml",
-        #"views/res_partner.xml",
+        "views/res_partner.xml",
     ],
 }

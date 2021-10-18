@@ -11,7 +11,7 @@
                     attrs="{'invisible':[
                     '|','|',
                     ('state_tributacion', 'in', (False, 'aceptado')),
-                    ('move_type','not in',['out_invoice','out_refund']),
+                    ('move_type','!=','out_invoice'),
                     ('state','=','draft'),
                 ]}"/>
                 <button name="generate_and_send_invoices" type="object" string="Enviar factura a Hacienda"
@@ -19,7 +19,7 @@
                     '|','|','|',
                     ('state_tributacion', '!=', False),
                     ('electronic_sequence', '=', False),
-                    ('move_type','not in',['out_invoice','out_refund']),
+                    ('move_type','!=','out_invoice'),
                     ('state','=','draft'),
                 ]}"/>
             </button>
@@ -28,42 +28,29 @@
                 <attribute name="invisible">False</attribute>
             </button>
 
-            <button name="action_reverse" position="attributes">
-                <attribute name="string">Generar nota de crédito</attribute>
-            </button>
-
-<!--            <field name="invoice_date" position="attributes">-->
-<!--                <attribute name="readonly">1</attribute>-->
-<!--            </field>-->
+            <field name="invoice_date" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </field>
             <field name="invoice_date" position="after">
-                <field name="date_issuance" string="Fecha emisión"/>
+                <field name="date_issuance"/>
             </field>
             <field name="invoice_payment_term_id" position="attributes">
                 <attribute name="required">1</attribute>
             </field>
             <field name="tipo_documento" position="after">
-                <field name="reference_code_id" string="Tipo nota crédito" attrs="{'invisible':[('move_type','not in',['out_refund','in_refund'])]}"/>
-                <field name="invoice_id" domain="[('number_electronic', '!=', False)]" string="Comprobante original" attrs="{'invisible':[('move_type','not in',['out_refund','in_refund'])]}"/>
-                 <field name="electronic_sequence" string="Secuencia"/>
-                <field name="number_electronic" string="Número electrónico"/>
-                <field name="state_tributacion" string="Estado" style="color:#24e112"/>
+                <field name="reference_code_id"/>
+                <field name="invoice_id" domain="[('number_electronic', '!=', False)]"/>
+                <field name="state_tributacion"/>
                 <field name="fname_xml_respuesta_tributacion" invisible="1" />
-                <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion" string="Respuesta XML" style="color:#0f4d9b"/>
+                <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"/>
                 <field name="fname_xml_comprobante" invisible="1"/>
-                <field name="xml_comprobante" filename="fname_xml_comprobante" string="Comprobante XML" style="color:#0f4d9b"/>
-                <field name="electronic_invoice_return_message" invisible="1"/>
-
+                <field name="xml_comprobante" filename="fname_xml_comprobante"/>
+                <field name="electronic_invoice_return_message"/>
+                <field name="electronic_sequence"/>
+                <field name="number_electronic"/>
             </field>
             <xpath expr="//field[@name='invoice_line_ids']//tree//field[@name='discount']" position="after">
                 <field name="discount_note"/>
-            </xpath>
-
-            <xpath expr="//field[@name='payment_methods_id']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-
-            <xpath expr="//label[@for='journal_id']" position="before">
-                <field name="payment_method_id" required="True"/>
             </xpath>
         </field>
     </record>

@@ -7,8 +7,6 @@
 <!--            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/model_json2.js"/>-->
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/pos.js"/>
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/PaymentScreen.js"/>
-            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/ClientDetailsEdit.js"/>
-            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/client.js"/>
 <!--            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/models3.js"/>-->
         </xpath>
     </template>

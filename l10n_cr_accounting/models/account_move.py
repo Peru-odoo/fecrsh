@@ -13,7 +13,6 @@ class AccountInvoice(models.Model):
         comodel_name="reference.code",
         readonly=True,
         states={"draft": [("readonly", False)]},
-        string=u'Tipo nota crédito'
     )
     payment_methods_id = fields.Many2one(
         comodel_name="payment.methods",
@@ -87,15 +86,15 @@ class AccountInvoice(models.Model):
     )
     tipo_documento = fields.Selection(
         selection=[
-            ("FE", _("Factura electrónica")),
-            ("FEE", _("Factura electrónica de exportación")),
-            ("TE", _("Tiquete electrónico")),
-            ("NC", _("Nota de crédito")),
-            ("ND", _("Nota de débito")),
-            ("CCE", _("Aceptación MR")),
-            ("CPCE", _("Aceptación parcial de MR")),
-            ("RCE", _("Rechazo MR")),
-            ("FEC", _("Factura electrónica de compra")),
+            ("FE", _("Electronic Bill")),
+            ("FEE", _("Electronic Export Invoice")),
+            ("TE", _("Electronic Ticket")),
+            ("NC", _("Credit Note")),
+            ("ND", _("Debit Note")),
+            ("CCE", _("MR Acceptance")),
+            ("CPCE", _("MR Partial Acceptance")),
+            ("RCE", _("MR Rejection")),
+            ("FEC", _("Electronic Export Invoice")),
         ],
         default="FE",
         help="Indicates the type of document according to the classification of the Ministry of Finance",

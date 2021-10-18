@@ -2,7 +2,6 @@
 import base64
 import datetime
 import logging
-import requests
 from threading import Lock
 from xml.sax.saxutils import escape
 from functools import partial
@@ -16,9 +15,8 @@ from odoo.exceptions import UserError
 
 from odoo.addons.l10n_cr_electronic_invoice import cr_edi
 
-
-NIF_API = "https://api.hacienda.go.cr/fe/ae"
 lock = Lock()
+
 _logger = logging.getLogger(__name__)
 
 TRIBUTATION_STATE= [
@@ -221,20 +219,32 @@ class PosOrder(models.Model):
                     doc.xml_respuesta_tributacion = response_json.get("respuesta-xml")
                     if doc.partner_id and doc.partner_id.email:
                         email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
-                        attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                                       ("res_id", "=", doc.id),
-                                                                       ("res_field", "=", "xml_comprobante")
-                                                                       ],limit=1,)
+                        attachment = self.env["ir.attachment"].search(
+                            [
+                                ("res_model", "=", "pos.order"),
+                                ("res_id", "=", doc.id),
+                                ("res_field", "=", "xml_comprobante"),
+                            ],
+                            limit=1,
+                        )
                         attachment.name = doc.fname_xml_comprobante
-
-                        #archivo xml de envio y respuesta del comprobante en odoo
-                        attachment_resp = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                                            ("res_id", "=", doc.id),
-                                                                            ("res_field", "=", "xml_respuesta_tributacion")
-                                                                            ],limit=1)
+                        attachment.datas_fname = doc.fname_xml_comprobante
+                        attachment_resp = self.env["ir.attachment"].search(
+                            [
+                                ("res_model", "=", "pos.order"),
+                                ("res_id", "=", doc.id),
+                                ("res_field", "=", "xml_respuesta_tributacion"),
+                            ],
+                            limit=1,
+                        )
                         attachment_resp.name = doc.fname_xml_respuesta_tributacion
-                        email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
-                        email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
+                        attachment_resp.datas_fname = doc.fname_xml_respuesta_tributacion
+                        email_template.attachment_ids = [
+                            (6, 0, [attachment.id, attachment_resp.id])
+                        ]
+                        email_template.with_context(type="binary", default_type="binary").send_mail(
+                            doc.id, raise_exception=False, force_send=True
+                        )
                         email_template.attachment_ids = [(5)]
                         doc.state_email = "sent"
                     else:
@@ -379,7 +389,7 @@ class PosOrder(models.Model):
         for line in self.lines:
 
             no_discount_amount = line.qty * line.price_unit
-            discount_amount = round((line.qty * line.price_unit) * (line.discount/100),2)
+            discount_amount = line.qty * line.price_unit * line.discount
             amounts["discount"] += discount_amount
             line_type = "service" if line.product_id.type == "service" else "product"
             is_tax = "taxed" if line.tax_ids_after_fiscal_position else "no_taxed"
@@ -555,17 +565,12 @@ class PosOrder(models.Model):
                     }
                 doc.date_issuance = date_cr
                 # invoice_comments = ""
-
-
-                """AQUÍ TIENEN QUE IR LAS VALIDACIONES"""
-                self.pos_valitation_einvoice()
-
                 xml_string_builder = cr_edi.gen_xml.gen(doc)
-                #xml_to_sign = str(xml_string_builder)
+                xml_to_sign = str(xml_string_builder)
                 xml_firmado = cr_edi.utils.sign_xml(
                     cert=doc.company_id.signature,
                     pin=doc.company_id.frm_pin,
-                    xml=xml_string_builder,
+                    xml=xml_to_sign,
                 )
                 doc.fname_xml_comprobante = doc.tipo_documento + "_" + docName + ".xml"
                 doc.xml_comprobante = base64.encodebytes(xml_firmado)
@@ -627,31 +632,3 @@ class PosOrder(models.Model):
         _logger.info("MAB 014 - Valida Hacienda POS- Finalizado Exitosamente")
 
 
-    def pos_valitation_einvoice(self):
-        pass
-
-
-    #METODO COPIADO DE l10n_cr_vat_validation PARA TRAER DATOS DEL CLIENTE
-    @api.model
-    def _get_name_from_vat(self,vat):
-        if not self.vat:
-            return
-        response = requests.get(NIF_API, params={"identificacion": vat})
-        if response.status_code == 200:
-            response_json = response.json()
-            return response_json
-        elif response.status_code == 404:
-            title = "VAT Not found"
-            message = "The VAT is not on the API"
-        elif response.status_code == 400:
-            title = "API Error 400"
-            message = "Bad Request"
-        else:
-            title = "Unknown Error"
-            message = "Unknown error in the API request"
-        return {
-            "warning": {
-                "title": title,
-                "message": message,
-            }
-        }

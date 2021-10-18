@@ -1,45 +1,49 @@
-# -*- coding: utf-8 -*-
-
-from odoo import api,fields, models
+from odoo import api, fields, models
 
 
-class AccountConfigSettings(models.TransientModel):
+class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    module_import_bills = fields.Boolean(string=u"Importación facturas electrónicas",
-                                         implied_group='account.group_account_manager')
-    invoice_import_ids = fields.Many2one(
-        comodel_name="account.invoice.import.config",
-        inverse_name="company_id",
-        string=u'Configuración para importar facturas.'
+    expense_account_id = fields.Many2one(
+        comodel_name="account.account",
+        company_dependent=True,
+        string="Default Expense Account for FE invoice import",
+        domain=[("deprecated", "=", False)],
+        help="The expense account used when importing Costa Rican electronic invoice automatically",
     )
-
-    def set_values(self):
-        super(AccountConfigSettings, self).set_values()
-        self.env['ir.config_parameter'].set_param('module_import_bills', self.module_import_bills)
+    load_lines = fields.Boolean(
+        string="Indicates if invoice lines should be load when loading a Costa Rican Digital Invoice",
+    )
+    reimbursable_email = fields.Char(
+        string='This email is searched in the "to" of the email to mark the invoice as refundable',
+        required=False,
+        copy=False,
+        index=True,
+    )
+    notification_email = fields.Char(
+        string="Address to which any notification related to FE is sent",
+        copy=False,
+        index=True,
+    )
 
     @api.model
     def get_values(self):
-        res = super(AccountConfigSettings, self).get_values()
-        res.update(module_import_bills=self.env['ir.config_parameter'].get_param('module_import_bills'))
+        res = super(ResConfigSettings, self).get_values()
+        get_param = self.env["ir.config_parameter"].sudo().get_param
+        res.update(
+            expense_account_id=int(get_param("expense_account_id")),
+            load_lines=get_param("load_lines"),
+            reimbursable_email=get_param("reimbursable_email"),
+            notification_email=get_param("notification_email"),
+        )
         return res
 
-    def open_params_import_ininvoice(self):
-        id=None
-        config = self.env['account.invoice.import.config'].sudo().search([('company_id','=',self.env.company.id),('active','=',True)])
-        if config:
-            id = config.id
-
-
-        return {
-            'type': 'ir.actions.act_window',
-            'name': u'Configuración',
-            'view_mode': 'form',
-            'res_model': 'account.invoice.import.config',
-            'res_id': id,
-            'target': 'current',
-            'context': {
-                'default_company_id': self.env.company.id,
-                'form_view_initial_mode': 'edit',
-            }
-        }
+    # este set values no anda
+    @api.model
+    def set_values(self):
+        super(ResConfigSettings, self).set_values()
+        set_param = self.env["ir.config_parameter"].sudo().set_param
+        set_param("expense_account_id", self.expense_account_id.id)
+        set_param("load_lines", self.load_lines)
+        set_param("reimbursable_email", self.reimbursable_email)
+        set_param("notification_email", self.notification_email)

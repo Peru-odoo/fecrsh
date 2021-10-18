@@ -51,7 +51,7 @@
     </Receptor>
     <CondicionVenta>{{document.invoice_payment_term_id.sale_conditions_id.sequence}}</CondicionVenta>
     <PlazoCredito>{{document.invoice_payment_term_id.line_ids[0].days}}</PlazoCredito>
-    <MedioPago>{{document.payment_method_id.sequence}}</MedioPago>
+    <MedioPago>{{document.payment_methods_id.sequence}}</MedioPago>
     <DetalleServicio>
         {% set line_number = 0 %} {% for line in lines %}
         <LineaDetalle>

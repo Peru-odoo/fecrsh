@@ -15,17 +15,11 @@ class MoveLine(models.Model):
     product_code = fields.Char(
         related="product_id.default_code",
     )
-    # no_discount_amount = fields.Monetary(
-    #     compute="_compute_discount_amount",
-    # )
-    # discount_amount = fields.Monetary(
-    #     compute="_compute_discount_amount",
-    # )
-    no_discount_amount = fields.Float(
-        compute="_compute_discount_amount",store=True
+    no_discount_amount = fields.Monetary(
+        compute="_compute_discount_amount",
     )
-    discount_amount = fields.Float(
-        compute="_compute_discount_amount",store=True
+    discount_amount = fields.Monetary(
+        compute="_compute_discount_amount",
     )
 
     purchase_type = fields.Selection(

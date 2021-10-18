@@ -1,6 +1,6 @@
 {
     "name": "L10N CR Accounting",
-    "version": "14.0.0.2",
+    "version": "14.0.0.1",
     "category": "Accounting",
     "author": "HomebrewSoft",
     "website": "https://homebrewsoft.dev",

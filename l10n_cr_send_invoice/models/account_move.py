@@ -164,5 +164,4 @@ class AccountInvoice(models.Model):
 
     def update_state(self):
         super().update_state()
-        if self.state_tributacion == 'aceptado' and self.move_type in ('out_invoice','out_refund','in_invoice'):
-            self._send_mail()
+        self._send_mail()

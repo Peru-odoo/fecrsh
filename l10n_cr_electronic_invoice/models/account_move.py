@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import base64
 import logging
 
@@ -7,18 +5,11 @@ from lxml import etree
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import email_re, email_split
 
 from .. import cr_edi
-from .. import utils
+
 _logger = logging.getLogger(__name__)
 
-
-STATE_EMAIL = [
-                ("no_email", _("No email account")),
-                ("sent", _("Sent")),
-                ("fe_error", _("Error FE")),
-              ]
 
 class AccountInvoice(models.Model):
     _inherit = "account.move"
@@ -39,35 +30,35 @@ class AccountInvoice(models.Model):
     )
     state_send_invoice = fields.Selection(
         selection=[
-            ("aceptado", _("Aceptado")),
-            ("rechazado", _("Rechazado")),
+            ("aceptado", _("Accepted")),
+            ("rechazado", _("Rejected")),
             ("error", "Error"),
-            ("na", _("No aplica")),
-            ("ne", _("No encontrado")),
-            ("firma_invalida", _("Firma inválida")),
-            ("procesando", _("Procesando")),
+            ("na", _("Not Apply")),
+            ("ne", _("Not Found")),
+            ("firma_invalida", _("Invalid Signature")),
+            ("procesando", _("Processing")),
         ],
         readonly=True,
     )
     state_tributacion = fields.Selection(
         selection=[
-            ("aceptado", _("Aceptado")),
-            ("rechazado", _("Rechazado")),
-            ("recibido", _("Recibido")),
-            ("firma_invalida", _("Firma inválida")),
+            ("aceptado", _("Accepted")),
+            ("rechazado", _("Rejected")),
+            ("recibido", _("Received")),
+            ("firma_invalida", _("Invalid Signature")),
             ("error", "Error"),
-            ("procesando", _("Procesando")),
-            ("na", _("No aplica")),
-            ("ne", _("No encontrado")),
+            ("procesando", _("Processing")),
+            ("na", _("Not Aplly")),
+            ("ne", _("Not Found")),
         ],
         copy=False,
         readonly=True,
     )
     state_invoice_partner = fields.Selection(
         selection=[
-            ("1", _("Aceptado")),
-            ("3", _("Rechazado")),
-            ("2", _("Parcialmente aceptado")),
+            ("1", _("Accepted")),
+            ("3", _("Rejected")),
+            ("2", _("Partial Acceptance")),
         ],
     )
     xml_respuesta_tributacion = fields.Binary(
@@ -108,19 +99,6 @@ class AccountInvoice(models.Model):
         compute="_compute_to_process",
     )
 
-    usd_rate = fields.Float(
-        compute="_compute_usd_currency_id",
-    )
-
-    @api.depends("invoice_date", "company_id.currency_id")
-    def _compute_usd_currency_id(self):
-        for record in self:
-            if record.invoice_date:
-                record.usd_rate = self.env.ref("base.USD")._convert(
-                    1, record.company_id.currency_id, record.company_id, record.invoice_date
-                )
-
-
     @api.depends("company_id.frm_ws_ambiente", "journal_id.to_process")
     def _compute_to_process(self):
         for invoice in self:
@@ -128,9 +106,7 @@ class AccountInvoice(models.Model):
                 invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process
             )
 
-    metodo_pago_partner = fields.Many2one("payment.methods",related='partner_id.payment_methods_id',compute='_compute_payment_methods')
-
-    payment_method_id = fields.Many2one("payment.methods",string=u'Método de Pago',readonly=False,store=True)
+    # invoice_payment_term_id = fields.Many2one(required=True)
 
     _sql_constraints = [
         (
@@ -139,26 +115,6 @@ class AccountInvoice(models.Model):
             "La clave de comprobante debe ser única",
         ),
     ]
-
-    state_email = fields.Selection(selection=STATE_EMAIL, copy=False)
-
-    def cal_payment_method(self):
-        if self.metodo_pago_partner:
-            self.payment_method_id = self.metodo_pago_partner
-        elif self.payment_method_id:
-            self.payment_method_id = self.payment_method_id
-        elif len(self.partner_id.payment_methods_id) > 0:
-            self.payment_method_id = self.partner_id.payment_methods_id
-        else:
-            self.payment_method_id = False
-    @api.depends('partner_id','partner_id.payment_methods_id')
-    def _compute_payment_methods(self):
-       self.cal_payment_method()
-
-    @api.onchange('partner_id', 'partner_id.payment_methods_id')
-    def _onchange_partner_id(self):
-        super(AccountInvoice, self)._onchange_partner_id()
-        self.cal_payment_method()
 
     def get_amounts(self):
         """Compute amounts to be used in XML generation based on invoice lines
@@ -185,10 +141,6 @@ class AccountInvoice(models.Model):
             "discount": 0,
             "other_charges": 0,  # TODO
         }
-        exo = False
-        if self.partner_id.has_exoneration:
-            exo = True
-
         for line in self.invoice_line_ids:
             if line.display_type:  # Section or note
                 continue
@@ -197,19 +149,8 @@ class AccountInvoice(models.Model):
             amounts["discount"] += line.discount_amount
             line_type = "service" if line.product_id.type == "service" else "product"
             is_tax = "taxed" if line.tax_ids else "no_taxed"
-            if exo:
-                amount = round(self.exoneration_cal() * (line.no_discount_amount),3)
-                amounts[line_type + "_" + is_tax] += amount
-                amounts[line_type + "_exempt"] += line.no_discount_amount - amount
-            else:
-                amounts[line_type + "_" + is_tax] += line.no_discount_amount  # TODO Exempt
-
+            amounts[line_type + "_" + is_tax] += line.no_discount_amount  # TODO Exempt
         return amounts
-
-    #TODO Cálculo para exoneraciones
-    def exoneration_cal(self):
-        if self.partner_tax_id:
-            return 1 - ((self.partner_tax_id.percentage_exoneration / 100) * 100) / self.partner_tax_id.tax_root.amount
 
     @api.constrains("xml_supplier_approval")
     def _verify_xml_supplier_approval(self):
@@ -269,11 +210,9 @@ class AccountInvoice(models.Model):
         elif self.move_type in ("in_invoice", "in_refund"):
             self.state_send_invoice = state
 
-        self.fname_xml_respuesta_tributacion = "RPTA_{}.xml".format(self.number_electronic)
+        self.fname_xml_respuesta_tributacion = "respuesta_{}.xml".format(self.number_electronic)
         self.xml_respuesta_tributacion = response_json.get("respuesta-xml")
-
-        """Quitar envío de mail"""
-
+        # self._send_mail()
 
     def send_mrs_to_hacienda(self):
         """Send message to API"""
@@ -461,18 +400,15 @@ class AccountInvoice(models.Model):
     def _onchange_partner_id(self):
         """Set payment_methods_id and tipo_documento based on partner"""
         super(AccountInvoice, self)._onchange_partner_id()
-        self.cal_payment_method()
+        self.payment_methods_id = self.partner_id.payment_methods_id
 
-        if self.partner_id:
-            if self.partner_id and self.partner_id.identification_id and self.partner_id.vat:
-                if self.partner_id.country_id.code == "CR":
-                    self.tipo_documento = "FE"
-                else:
-                    self.tipo_documento = "FEE"
+        if self.partner_id and self.partner_id.identification_id and self.partner_id.vat:
+            if self.partner_id.country_id.code == "CR":
+                self.tipo_documento = "FE"
             else:
-                self.tipo_documento = "TE"
+                self.tipo_documento = "FEE"
         else:
-            self.tipo_documento = "FE"
+            self.tipo_documento = "TE"
 
     @api.constrains("number_electronic")
     def _verify_number_electronic(self):
@@ -572,7 +508,6 @@ class AccountInvoice(models.Model):
                 )
                 invoice.xml_respuesta_tributacion = response_json.get("respuesta-xml")
 
-                #Enviar mail cuando el comprobant es Aceptado por Hacienda
                 if state == "aceptado":
                     invoice._send_mail()
                 elif state == "firma_invalida":
@@ -733,7 +668,6 @@ class AccountInvoice(models.Model):
 
     def action_post(self):
         """Validates invoice and create sequence and number electronic"""
-        self.validations()
         res = super(AccountInvoice, self).action_post()
         for invoice in self.filtered("to_process"):
             sequence_obj = invoice._get_sequence()
@@ -749,136 +683,3 @@ class AccountInvoice(models.Model):
             )
             invoice.state_send_invoice = False  # TODO why
         return res
-
-    def validations(self):
-        for inv in self:
-            if inv.move_type == 'out_refund' and not inv.reference_code_id:
-                raise UserError(_("Al ser una nota de crédito, debe validar que tipo es. Complete la campo 'Tipo nota crédito' "))
-
-            if not inv.partner_id.email:
-                raise UserError(_("Valide que el cliente tenga un correo electrónico "))
-
-
-
-
-    def name_get(self):
-        """
-        - Add amount_untaxed in name_get of invoices
-        - Skipp number usage on invoice from incoming mail
-        """
-        if self._context.get("invoice_from_incoming_mail"):
-            logging.info("Factura de correo")
-            res = []
-            for inv in self:
-                res.append((inv.id, (inv.name or str(inv.id)) + "MI"))
-            return res
-        res = super(AccountInvoice, self).name_get()
-        if self._context.get("invoice_show_amount"):
-            new_res = []
-            for (inv_id, name) in res:
-                inv = self.browse(inv_id)
-                name += _(" Amount w/o tax: {} {}").format(inv.amount_untaxed, inv.currency_id.name)
-                new_res.append((inv_id, name))
-            return new_res
-        else:
-            return res
-
-    # TODO CÓDIGO ORIGINAL
-    @api.model
-    def message_new(self, msg_dict, custom_values=None):
-        module_import_bills = bool(self.env["ir.config_parameter"].sudo().get_param("module_import_bills"))
-        if not module_import_bills:
-            r = super(AccountInvoice, self).message_new(msg_dict, custom_values)
-        else:
-            r = self.message_new_invoice(msg_dict, custom_values, module_import_bills)
-
-        return r
-
-
-    def message_new_invoice(self,msg_dict, custom_values,module_import_bills):
-        # TODO CÓDIGO AGREGADO
-        if module_import_bills:
-            custom_values = {"move_type": "in_invoice"}
-        if (custom_values or {}).get("move_type", "entry") not in ("out_invoice", "in_invoice"):
-            return super().message_new(msg_dict, custom_values=custom_values)
-
-        def is_internal_partner(partner):
-            # Helper to know if the partner is an internal one.
-            return partner.user_ids and all(
-                user.has_group("base.group_user") for user in partner.user_ids
-            )
-        cc_mail_addresses = email_split(msg_dict.get("cc", ""))
-        followers = [
-            partner for partner in self._mail_find_partner_from_emails(cc_mail_addresses) if partner
-        ]
-        logging.info("-------- Seguidores --------")
-
-        # Search for partner that sent the mail.
-        from_mail_addresses = email_split(msg_dict.get("from", ""))
-        senders = partners = [partner for partner in self._mail_find_partner_from_emails(from_mail_addresses) if
-                              partner]
-        logging.info("-------- Remitentes --------")
-        # Search for partners using the user.
-        if not senders:
-            senders = partners = list(self._mail_search_on_user(from_mail_addresses))
-
-        if partners:
-            # Check we are not in the case when an internal user forwarded the mail manually.
-            if is_internal_partner(partners[0]):
-                # Search for partners in the mail's body.
-                body_mail_addresses = set(email_re.findall(msg_dict.get("body")))
-                partners = [
-                    partner
-                    for partner in self._mail_find_partner_from_emails(body_mail_addresses)
-                    if not is_internal_partner(partner)
-                ]
-        logging.info("-------- partners --------")
-
-        # Little hack: Inject the mail's subject in the body.
-        if msg_dict.get("subject") and msg_dict.get("body"):
-            msg_dict["body"] = "<div><div><h3>{}</h3></div>{}</div>".format(
-                msg_dict["subject"],
-                msg_dict["body"],
-            )
-
-        # Create the invoice.
-        values = {
-            "name": "/",  # we have to give the name otherwise it will be set to the mail's subject
-            "invoice_source_email": from_mail_addresses[0],
-            "partner_id": partners and partners[0].id or False,
-        }
-
-        # TODO CÓDIGO AGREGADO
-        # Entra a tallar acá todo lo referente a la configuración de facturación electrónica.
-        # module_import_bills = bool(self.env["ir.config_parameter"].sudo().get_param("module_import_bills"))
-        invoice_import_ids = self.env['account.invoice.import.config'].sudo().search(
-            [('company_id', '=', self.env.companies.id), ('active', '=', True)])
-        if module_import_bills:
-            custom_values['move_type'] = 'in_invoice'
-            if 'journal_id' not in custom_values:
-                if not invoice_import_ids.journal_id:
-                    raise UserError(
-                        _("Para importar las facturas de proveedor debe definir un diario en la configuración"))
-                custom_values['journal_id'] = invoice_import_ids.journal_id.id
-            attachments = msg_dict.get("attachments")
-            vals = utils.parse_xml.parseXml(self=self, values=values, attachments=attachments,
-                                            invoice_import_ids=invoice_import_ids)
-            values.update(vals)
-            invoice = self.create_invoice_electronic(vals)
-            move = invoice
-        else:
-            move_ctx = self.with_context(default_move_type=custom_values['move_type'],default_journal_id=custom_values['journal_id'])
-            logging.info("-------- valores y contexto --------")
-            move = super(AccountInvoice, move_ctx).message_new(msg_dict, custom_values=values)
-        move._compute_name()  # because the name is given, we need to recompute in case it is the first invoice of the journal
-        logging.info("-------- Crea factura --------")
-        # Assign followers.
-        all_followers_ids = set(
-            partner.id for partner in followers + senders + partners if is_internal_partner(partner))
-        move.message_subscribe(list(all_followers_ids))
-        return move
-
-
-    def create_invoice_electronic(self, vals):
-        move = self.env['account.move'].create(vals)
-        return move
