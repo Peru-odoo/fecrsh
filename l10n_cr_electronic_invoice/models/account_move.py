@@ -105,9 +105,10 @@ class AccountInvoice(models.Model):
         copy=False,
     )
     ignore_total_difference = fields.Boolean()
-    to_process = fields.Boolean(compute="_compute_to_process", default=False, store=True)
+    to_process = fields.Boolean(related='journal_id.to_process', store=True, copy=False)
 
     usd_rate = fields.Float(compute="_compute_usd_currency_id",)
+
 
 
     @api.depends("invoice_date", "company_id.currency_id")
@@ -118,13 +119,13 @@ class AccountInvoice(models.Model):
                     1, record.company_id.currency_id, record.company_id, record.invoice_date
                 )
 
-    @api.depends("company_id.frm_ws_ambiente", "journal_id.to_process",'name','journal_id','company_id')
-    def _compute_to_process(self):
-        for invoice in self:
-            if invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process:
-                invoice.to_process = True
-            else:
-                invoice.to_process = False
+    # @api.depends("company_id.frm_ws_ambiente", "journal_id.to_process",'name','journal_id','company_id')
+    # def _compute_to_process(self):
+    #     for invoice in self:
+    #         if invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process:
+    #             invoice.to_process = True
+    #         else:
+    #             invoice.to_process = False
 
             #invoice.to_process = (invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process)
 
