@@ -2,6 +2,7 @@
 import base64
 import datetime
 import logging
+import requests
 from threading import Lock
 from xml.sax.saxutils import escape
 from functools import partial
@@ -15,8 +16,9 @@ from odoo.exceptions import UserError
 
 from odoo.addons.l10n_cr_electronic_invoice import cr_edi
 
-lock = Lock()
 
+NIF_API = "https://api.hacienda.go.cr/fe/ae"
+lock = Lock()
 _logger = logging.getLogger(__name__)
 
 TRIBUTATION_STATE= [
@@ -34,6 +36,8 @@ class PosOrder(models.Model):
     _name = "pos.order"
     _inherit = "pos.order", "mail.thread"
 
+    is_return = fields.Boolean(string='Retorno')
+
     @api.model
     def sequence_number_sync(self, vals):
         tipo_documento = vals.get("tipo_documento", False)
@@ -46,12 +50,33 @@ class PosOrder(models.Model):
             elif (tipo_documento == "TE"and sequence >= session.config_id.sequence_te_id.number_next_actual):
                 session.config_id.sequence_te_id.number_next_actual = sequence + 1
 
+    def _get_type_documento(self,ui_order,vals):
+        if 'is_return' in vals:
+            if vals['is_return']:
+                type_document = 'NC'
+            elif not ui_order.get('partner_id'):
+                type_document = 'TE'
+            else:
+                type_document = 'FE'
+        else:
+            if not ui_order.get('partner_id'):
+                type_document = 'TE'
+            else:
+                type_document = 'FE'
+
+        return type_document
+
+
     @api.model
     def _order_fields(self, ui_order):
         vals = super(PosOrder, self)._order_fields(ui_order)
-        vals["tipo_documento"] = 'TE' if not ui_order.get('partner_id') else 'FE'
+        vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
         vals["sequence"] = ui_order.get("sequence")
         vals["number_electronic"] = ui_order.get("number_electronic")
+        # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO PERTENECE A ESTE MÓDULO
+        if 'return_order_ref' in ui_order:
+            if ui_order.get('return_order_ref') != False:
+                vals['pos_order_id'] = int(ui_order['return_order_ref'])
         return vals
 
     @api.model
@@ -62,6 +87,8 @@ class PosOrder(models.Model):
         if vals["tipo_documento"]=='FE':
             seq = session.config_id.sequence_fe_id.next_by_id()
         elif vals["tipo_documento"]=='TE':
+            seq = session.config_id.sequence_te_id.next_by_id()
+        elif vals["tipo_documento"] == 'NC':
             seq = session.config_id.sequence_te_id.next_by_id()
         else:
             raise UserError(
@@ -122,7 +149,7 @@ class PosOrder(models.Model):
     def action_pos_order_paid(self):
         for order in self:
             if order.pos_order_id:
-                order.name = order.session_id.config_id.return_sequence_id._next()
+                order.name = order.session_id.config_id.sequence_nc_id._next()
         return super(PosOrder, self).action_pos_order_paid()
 
     def refund(self):
@@ -219,32 +246,20 @@ class PosOrder(models.Model):
                     doc.xml_respuesta_tributacion = response_json.get("respuesta-xml")
                     if doc.partner_id and doc.partner_id.email:
                         email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
-                        attachment = self.env["ir.attachment"].search(
-                            [
-                                ("res_model", "=", "pos.order"),
-                                ("res_id", "=", doc.id),
-                                ("res_field", "=", "xml_comprobante"),
-                            ],
-                            limit=1,
-                        )
+                        attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
+                                                                       ("res_id", "=", doc.id),
+                                                                       ("res_field", "=", "xml_comprobante")
+                                                                       ],limit=1,)
                         attachment.name = doc.fname_xml_comprobante
-                        attachment.datas_fname = doc.fname_xml_comprobante
-                        attachment_resp = self.env["ir.attachment"].search(
-                            [
-                                ("res_model", "=", "pos.order"),
-                                ("res_id", "=", doc.id),
-                                ("res_field", "=", "xml_respuesta_tributacion"),
-                            ],
-                            limit=1,
-                        )
+
+                        #archivo xml de envio y respuesta del comprobante en odoo
+                        attachment_resp = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
+                                                                            ("res_id", "=", doc.id),
+                                                                            ("res_field", "=", "xml_respuesta_tributacion")
+                                                                            ],limit=1)
                         attachment_resp.name = doc.fname_xml_respuesta_tributacion
-                        attachment_resp.datas_fname = doc.fname_xml_respuesta_tributacion
-                        email_template.attachment_ids = [
-                            (6, 0, [attachment.id, attachment_resp.id])
-                        ]
-                        email_template.with_context(type="binary", default_type="binary").send_mail(
-                            doc.id, raise_exception=False, force_send=True
-                        )
+                        email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
+                        email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
                         email_template.attachment_ids = [(5)]
                         doc.state_email = "sent"
                     else:
@@ -389,7 +404,7 @@ class PosOrder(models.Model):
         for line in self.lines:
 
             no_discount_amount = line.qty * line.price_unit
-            discount_amount = line.qty * line.price_unit * line.discount
+            discount_amount = round((line.qty * line.price_unit) * (line.discount/100),2)
             amounts["discount"] += discount_amount
             line_type = "service" if line.product_id.type == "service" else "product"
             is_tax = "taxed" if line.tax_ids_after_fiscal_position else "no_taxed"
@@ -419,30 +434,22 @@ class PosOrder(models.Model):
             if not docName:
                 continue
             if not docName.isdigit() or doc.company_id.frm_ws_ambiente == "disabled":
-                _logger.warning("MAB - Valida Hacienda - skipped Invoice %s", docName)
+                _logger.warning("MAB - Valida Hacienda - Omitir factura %s", docName)
                 continue
             if not doc.xml_comprobante:
-                if not doc.pos_order_id:
-                    if doc.amount_total < 0:
-                        doc.state_tributacion = "error"
-                        _logger.error(
-                            "MAB - Error documento %s tiene monto negativo pero no tiene documento referencia",
-                            doc.number_electronic,
-                        )
-                        continue
-                else:
-                    if doc.amount_total >= 0:
-                        doc.tipo_documento = "ND"
-                        # razon_referencia = "nota debito"
-                    else:
-                        doc.tipo_documento = "NC"
-                        # tipo_documento_referencia = "FE"
-                        # numero_documento_referencia = doc.pos_order_id.number_electronic
-                        # codigo_referencia = doc.reference_code_id.code
-                        # razon_referencia = "nota credito"
-                    # numero_documento_referencia = doc.pos_order_id.number_electronic
-                    # fecha_emision_referencia = doc.pos_order_id.date_issuance
-                    # codigo_referencia = doc.reference_code_id.code
+                if doc.is_return == True and doc.amount_total > 0:
+                    _logger.error(
+                        "MAB - Error documento %s tiene monto positivo, pero es nota de crédito en POS. ",
+                        doc.number_electronic,
+                    )
+                    continue
+                if doc.is_return == False and doc.amount_total < 0:
+                    _logger.error(
+                        "MAB - Error documento %s tiene monto negativo, cuando no es nota de crédito POS. ",
+                        doc.number_electronic,
+                    )
+                    continue
+
                 now_utc = datetime.datetime.now(pytz.timezone("UTC"))
                 now_cr = now_utc.astimezone(pytz.timezone("America/Costa_Rica"))
                 dia = docName[3:5]
@@ -565,12 +572,17 @@ class PosOrder(models.Model):
                     }
                 doc.date_issuance = date_cr
                 # invoice_comments = ""
+
+
+                """AQUÍ TIENEN QUE IR LAS VALIDACIONES"""
+                self.pos_valitation_einvoice()
+
                 xml_string_builder = cr_edi.gen_xml.gen(doc)
-                xml_to_sign = str(xml_string_builder)
+                #xml_to_sign = str(xml_string_builder)
                 xml_firmado = cr_edi.utils.sign_xml(
                     cert=doc.company_id.signature,
                     pin=doc.company_id.frm_pin,
-                    xml=xml_to_sign,
+                    xml=xml_string_builder,
                 )
                 doc.fname_xml_comprobante = doc.tipo_documento + "_" + docName + ".xml"
                 doc.xml_comprobante = base64.encodebytes(xml_firmado)
@@ -606,12 +618,12 @@ class PosOrder(models.Model):
             else:
                 if response_text.find("ya fue recibido anteriormente") != -1:
                     doc.state_tributacion = "procesando"
-                    doc.message_post(
-                        subject=_("Error"),
-                        body=_("Ya recibido anteriormente, se pasa a consultar"),
-                    )
+                    # doc.message_post(
+                    #     subject=_("Error"),
+                    #     body=_("Ya recibido anteriormente, se pasa a consultar"),
+                    # )
                 elif doc.error_count > 10:
-                    doc.message_post(subject=_("Error"), body=response_text)
+                    # doc.message_post(subject=_("Error"), body=response_text)
                     doc.state_tributacion = "error"
                     _logger.error(
                         "MAB - Invoice: %s  Status: %s Error sending XML: %s",
@@ -622,7 +634,7 @@ class PosOrder(models.Model):
                 else:
                     doc.error_count += 1
                     doc.state_tributacion = "procesando"
-                    doc.message_post(subject=_("Error"), body=response_text)
+                    # doc.message_post(subject=_("Error"), body=response_text)
                     _logger.error(
                         "MAB - Invoice: %s  Status: %s Error sending XML: %s",
                         doc.name,
@@ -632,3 +644,31 @@ class PosOrder(models.Model):
         _logger.info("MAB 014 - Valida Hacienda POS- Finalizado Exitosamente")
 
 
+    def pos_valitation_einvoice(self):
+        pass
+
+
+    #METODO COPIADO DE l10n_cr_vat_validation PARA TRAER DATOS DEL CLIENTE
+    @api.model
+    def _get_name_from_vat(self,vat):
+        if not self.vat:
+            return
+        response = requests.get(NIF_API, params={"identificacion": vat})
+        if response.status_code == 200:
+            response_json = response.json()
+            return response_json
+        elif response.status_code == 404:
+            title = "VAT Not found"
+            message = "The VAT is not on the API"
+        elif response.status_code == 400:
+            title = "API Error 400"
+            message = "Bad Request"
+        else:
+            title = "Unknown Error"
+            message = "Unknown error in the API request"
+        return {
+            "warning": {
+                "title": title,
+                "message": message,
+            }
+        }

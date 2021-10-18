@@ -9,6 +9,7 @@ class PosPaymentMethod(models.Model):
 
     payment_method_id = fields.Many2one('payment.methods',string=u'Método de pago')
     account_payment_term_id = fields.Many2one('account.payment.term',string=u'Término de pago')
+    is_refund = fields.Boolean(default=False, string=u'Usado para devolución')
 
     @api.onchange("payment_method_id")
     def _onchange_payment_method_id(self):

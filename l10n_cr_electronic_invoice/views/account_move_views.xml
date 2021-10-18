@@ -7,20 +7,40 @@
         <field name="inherit_id" ref="l10n_cr_accounting.account_move_form_view_inherit_fecr_account"/>
         <field name="arch" type="xml">
             <button name="action_invoice_sent" position="after">
-                <button name="action_check_hacienda" type="object" string="Consultar Hacienda"
-                    attrs="{'invisible':[
+                <!--para clientes-->
+                <button name="action_check_hacienda" type="object" string="Consultar a Hacienda"
+                        attrs="{'invisible':[
                     '|','|',
-                    ('state_tributacion', 'in', (False, 'aceptado')),
-                    ('move_type','!=','out_invoice'),
-                    ('state','=','draft'),
+                    ('state_tributacion', 'in', (False, 'aceptado','rechazado')),
+                    ('move_type','not in',['out_invoice','out_refund']),
+                    ('state','in',('draft','cancel')),
                 ]}"/>
-                <button name="generate_and_send_invoices" type="object" string="Enviar factura a Hacienda"
-                    attrs="{'invisible':[
+                <button name="generate_and_send_invoices" type="object" string="Enviar a Hacienda"
+                        confirm="Está seguro de continuar este proceso ?"
+                        attrs="{'invisible':[
                     '|','|','|',
                     ('state_tributacion', '!=', False),
                     ('electronic_sequence', '=', False),
-                    ('move_type','!=','out_invoice'),
-                    ('state','=','draft'),
+                    ('move_type','not in',['out_invoice','out_refund']),
+                    ('state','in',('draft','cancel')),
+                ]}"/>
+
+                <!--para proveedores-->
+                <button name="action_check_hacienda" type="object" string="Consultar a Hacienda"
+                        attrs="{'invisible':[
+                    '|','|',
+                    ('state_send_invoice', 'in', (False, 'aceptado','rechazado')),
+                    ('move_type','not in',['in_invoice']),
+                    ('state','in',('draft','cancel')),
+                ]}"/>
+                <button name="generate_and_send_invoices" type="object" string="Enviar a Hacienda"
+                        confirm="Está seguro de continuar este proceso ?"
+                        attrs="{'invisible':[
+                    '|','|','|',
+                    ('state_send_invoice', '!=', False),
+                    ('electronic_sequence', '=', False),
+                    ('move_type','not in',['in_invoice']),
+                    ('state','in',('draft','cancel')),
                 ]}"/>
             </button>
             <!-- enviar e imprimir siempre visible // TODO: Verificar si aplica para los dos botones -->
@@ -28,72 +48,154 @@
                 <attribute name="invisible">False</attribute>
             </button>
 
+            <button name="action_reverse" position="attributes">
+                <attribute name="string">Generar nota de crédito</attribute>
+            </button>
+
             <field name="invoice_date" position="attributes">
-                <attribute name="readonly">1</attribute>
+                <attribute name="attrs">{'invisible': [('move_type','=','entry')]}</attribute>
             </field>
             <field name="invoice_date" position="after">
-                <field name="date_issuance"/>
+                <field name="date_issuance" string="Fecha emisión" attrs="{'invisible': [('move_type','not in',('out_invoice','out_refund'))]}"/>
             </field>
             <field name="invoice_payment_term_id" position="attributes">
-                <attribute name="required">1</attribute>
+                <attribute name="attrs">{'invisible': [('move_type','=','entry')], 'required': [('move_type','!=','entry')]}</attribute>
             </field>
-            <field name="tipo_documento" position="after">
-                <field name="reference_code_id"/>
-                <field name="invoice_id" domain="[('number_electronic', '!=', False)]"/>
-                <field name="state_tributacion"/>
-                <field name="fname_xml_respuesta_tributacion" invisible="1" />
-                <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"/>
-                <field name="fname_xml_comprobante" invisible="1"/>
-                <field name="xml_comprobante" filename="fname_xml_comprobante"/>
-                <field name="electronic_invoice_return_message"/>
-                <field name="electronic_sequence"/>
-                <field name="number_electronic"/>
-            </field>
+            <xpath expr="//field[@name='tipo_documento']" position="replace"/>
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="tipo_documento" />
+                <field name="state_invoice_partner" attrs="{'invisible':['|',('tipo_documento','=', 'FEC'),('move_type','!=','in_invoice')],
+                'required': [('from_mail','=',True)]}" string="Aceptación"/>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page id="e-invoice_tab" string="Facturación electrónica" attrs="{'invisible': [('move_type', '=', 'entry')]}">
+                    <group>
+                        <!--para clientes-->
+                        <field name="reference_code_id" string="Tipo nota crédito"
+                               attrs="{'invisible':[('move_type','not in',['out_refund','in_refund'])]}"/>
+                        <field name="invoice_id" domain="[('number_electronic', '!=', False)]" string="Comprobante original"
+                               attrs="{'invisible':[('move_type','not in',['out_refund','in_refund'])]}"/>
+                        <field name="electronic_sequence" string="Secuencia"/>
+                        <field name="number_electronic" string="Número electrónico"/>
+                        <field name="state_tributacion" string="Estado" style="color:#24e112"
+                               attrs="{'invisible':[('move_type','in',['in_invoice','in_refund'])]}"/>
+
+                        <!--para proveedores-->
+                        <field name="fname_xml_supplier_approval" invisible="1"/>
+                        <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" />
+                        <field name="date_issuance" attrs="{'invisible':[('move_type','!=','in_invoice')]}" string="Fecha emisión"/>
+                        <field name="from_mail" string="Proviene de email?"/>
+
+                        <field name="state_send_invoice" string="Estado" style="color:#24e112"
+                               attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
+
+                        <!--para xml-->
+                        <field name="fname_xml_respuesta_tributacion" invisible="1"/>
+                        <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"
+                               string="Respuesta XML" style="color:#0f4d9b"/>
+                        <field name="fname_xml_comprobante" invisible="1"/>
+                        <field name="xml_comprobante" filename="fname_xml_comprobante" string="Comprobante XML"
+                               style="color:#0f4d9b"/>
+                        <field name="electronic_invoice_return_message" invisible="1"/>
+                    </group>
+
+                </page>
+            </xpath>
             <xpath expr="//field[@name='invoice_line_ids']//tree//field[@name='discount']" position="after">
                 <field name="discount_note"/>
             </xpath>
-        </field>
-    </record>
 
-    <!-- factura de proveedor -->
-    <record id="account_move_supplier_form_view_inherit_fecr" model="ir.ui.view">
-        <field name="name">account.move.supplier.form.view.inherit.fecr</field>
-        <field name="model">account.move</field>
-        <field name="inherit_id" ref="account_move_form_view_inherit_fecr"/>
-        <field name="arch" type="xml">
-            <button name="action_invoice_sent" position="after">
-                <button name="send_mrs_to_hacienda" type="object" string="Enviar a Hacienda"
-                    help="Envia la factura a hacienda sin demora. De todas formas el sistema chequea facturas para enviar cada cinco minutos"
-                    attrs="{'invisible':[
-                        '|','|','|',
-                        ('tipo_documento','==','FEC'),
-                        ('state_send_invoice','not in', (False, 'error', 'rechazado')),
-                        ('move_type','!=','in_invoice'),
-                        ('state','=','draft'),
-                        ]}"
-                />
-                <button name="generate_and_send_invoices" type="object" string="Enviar FEC" attrs="{'invisible':['|', ('tipo_documento','!=','FEC'), ('state_send_invoice','not in', (False,'rechazado', 'error'))]}"/>
+            <xpath expr="//field[@name='payment_methods_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
 
-                <button name="action_check_hacienda" type="object" string="Consultar Hacienda" attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
-            </button>
-            <field name="tipo_documento" position="after">
-                <field name="fname_xml_supplier_approval" invisible="1"/>
-                <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" attrs="{'invisible':['|',('tipo_documento','=', 'FEC'),('move_type','!=','in_invoice')]}"/>
+            <xpath expr="//label[@for='journal_id']" position="before">
+                <field name="payment_method_id" attrs="{'invisible': [('move_type','=','entry')], 'required': [('move_type','!=','entry')]}"/>
+            </xpath>
 
-                <field name="state_invoice_partner" attrs="{'invisible':['|',('tipo_documento','=', 'FEC'),('move_type','!=','in_invoice')]}"/>
-                <field name="date_issuance" attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
-                <field name="state_send_invoice" attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
-
-            </field>
             <xpath expr="(//field[@name='amount_total'])[last()]" position="after">
                 <field name="amount_tax_electronic_invoice"/>
                 <field name="amount_total_electronic_invoice"/>
             </xpath>
+
+            <!--para proveedores-->
             <field name="partner_bank_id" position="after">
                 <field name="purchase_type" attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
             </field>
+
+            <xpath expr="//header" position="after">
+                <div attrs="{'invisible': [('move_type','not in',('out_invoice','out_refund'))]}">
+                    <div class="alert alert-success text-center o_form_header"
+                         attrs="{'invisible': [('state_tributacion', '!=', 'aceptado')]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_tributacion" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                    <div class="alert alert-warning text-center o_form_header"
+                         attrs="{'invisible': [('state_tributacion', '!=', 'procesando')]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_tributacion" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                    <div class="alert alert-danger text-center o_form_header"
+                         attrs="{'invisible': ['|',('state_tributacion', 'in', ('aceptado','procesando')),('state_tributacion','=',False)]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_tributacion" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                </div>
+
+                <div attrs="{'invisible': [('move_type','not in',('in_invoice','in_refund'))]}">
+                     <div class="alert alert-success text-center o_form_header"
+                         attrs="{'invisible': [('state_send_invoice', '!=', 'aceptado')]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_send_invoice" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                    <div class="alert alert-warning text-center o_form_header"
+                         attrs="{'invisible': [('state_send_invoice', '!=', 'procesando')]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_send_invoice" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                    <div class="alert alert-danger text-center o_form_header"
+                         attrs="{'invisible': ['|',('state_send_invoice', 'in', ('aceptado','procesando')),('state_send_invoice','=',False)]}" role="status">
+                        <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
+                        <h4>
+                            <strong>Estado del comprobante electrónico en hacienda:
+                                <field name="state_send_invoice" style="text-transform: uppercase;"/>
+                                .
+                            </strong>
+                        </h4>
+                    </div>
+                </div>
+            </xpath>
+
         </field>
     </record>
+
+    <delete model="account.move" search="[('chart_template_id','=',ref('l10n_cr_electronic_invoice.account_move_supplier_form_view_inherit_fecr'))]"/>
 
     <record id="account_move_tree_view_inherit_fecr" model="ir.ui.view">
         <field name="name">account.move.tree.view.inherit.fecr</field>
@@ -108,6 +210,9 @@
                 <field name="electronic_sequence" string="Consecutivo"/>
                 <field name="state_tributacion"/>
             </field>
+            <field name="amount_untaxed_signed" position="attributes">
+                <attribute name="string">Subtotal</attribute>
+            </field>
         </field>
     </record>
 
@@ -121,6 +226,9 @@
             </tree>
             <field name="state" position="before">
                 <field name="state_send_invoice"/>
+            </field>
+            <field name="amount_untaxed_signed" position="attributes">
+                <attribute name="string">Subtotal</attribute>
             </field>
         </field>
     </record>
