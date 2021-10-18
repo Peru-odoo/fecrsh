@@ -35,6 +35,7 @@ class AccountJournalInherit(models.Model):
     to_process = fields.Boolean(
         default=True,
         help="If is checked, the documents related to this journal will be sended to the API (staging or production, based on company configuration)",
+        store=True
     )
 
     sequence_id = fields.Many2one('ir.sequence')
