@@ -106,7 +106,7 @@ class AccountInvoice(models.Model):
     )
     ignore_total_difference = fields.Boolean()
     to_process = fields.Boolean(
-        compute="_compute_to_process",
+        compute="_compute_to_process", default=False
     )
 
     usd_rate = fields.Float(
@@ -125,9 +125,12 @@ class AccountInvoice(models.Model):
     @api.depends("company_id.frm_ws_ambiente", "journal_id.to_process",'name')
     def _compute_to_process(self):
         for invoice in self:
-            invoice.to_process = (
-                invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process
-            )
+            if invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process:
+                invoice.to_process = True
+            else:
+                invoice.to_process = False
+
+            #invoice.to_process = (invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process)
 
     metodo_pago_partner = fields.Many2one("payment.methods", related='partner_id.payment_methods_id', compute='_compute_payment_methods')
 
