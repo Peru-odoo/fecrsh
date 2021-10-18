@@ -10,7 +10,7 @@ class AccountInvoiceImportConfig(models.Model):
 
     name = fields.Char(string=u"Descripción")
     company_id = fields.Many2one(comodel_name="res.company")
-    partner_id = fields.Many2one(comodel_name="res.partner",store=True,related='company_id.partner_id',string='Contacto')
+    partner_id = fields.Many2one(comodel_name="res.partner",related='company_id.partner_id',string='Contacto')
     active = fields.Boolean(string="Activo?",default=True)
     journal_id = fields.Many2one('account.journal',string='Diario proveedor')
     sequence = fields.Integer()
@@ -33,7 +33,7 @@ class AccountInvoiceImportConfig(models.Model):
     account_id = fields.Many2one(comodel_name="account.account",string="Cuenta de gasto",domain=[("deprecated", "=", False),])
     account_analytic_id = fields.Many2one(comodel_name="account.analytic.account",string=u'Cuenta analítica')
     label = fields.Char(string="Force Description",help="Force supplier invoice line description")
-    tax_ids = fields.Many2many(comodel_name="account.tax",string="Impuesto",domain=[("type_tax_use", "=", "purchase"),])
+    tax_ids = fields.Many2many(comodel_name="account.tax",string="Impuesto",domain=[("type_tax_use", "=", "purchase"),],ondelete="cascade",)
     static_product_id = fields.Many2one(comodel_name="product.product",string="Static Product")
 
     @api.constrains("invoice_line_method", "account_id", "static_product_id")
