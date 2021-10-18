@@ -44,8 +44,6 @@
         "views/account_journal_views.xml",
         "views/identification_type_views.xml",
         "views/res_company_views.xml",
-        "views/account_invoice_import_config_views.xml",
-        "views/res_config_settings_views.xml",
         "views/res_partner_views.xml",
         "views/resolution_views.xml",
         "views/uom_views.xml",
