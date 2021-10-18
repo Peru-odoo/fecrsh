@@ -57,7 +57,6 @@
             </field>
             <field name="invoice_date" position="after">
                 <field name="date_issuance" string="Fecha emisión" attrs="{'invisible': [('move_type','not in',('out_invoice','out_refund'))]}"/>
-                <field name="to_process" invisible="1"/>
             </field>
             <field name="invoice_payment_term_id" position="attributes">
                 <attribute name="attrs">{'invisible': [('move_type','=','entry')], 'required': [('move_type','!=','entry')]}</attribute>
