@@ -7,18 +7,13 @@
             <xpath expr="//div[@class='oe_title']" position="replace">
                 <div class="oe_title" id="mp_type">
                     <label for="payment_method_id" class="oe_edit_only" string="Método de aAgo"/>
-                    <h1>
-                        <field name="payment_method_id" class="oe_inline" required="1"/>
-                    </h1>
+                    <h1><field name="payment_method_id" class="oe_inline" required="1"/></h1>
                 </div>
             </xpath>
-            <xpath expr="//field[@name='hide_use_payment_terminal']" position="before">
-                <field name="account_payment_term_id" required="1"/>
-                <field name="name" string="Descripción"/>
-            </xpath>
-            <xpath expr="//field[@name='is_cash_count']" position="before">
-                <field name="is_refund"/>
-            </xpath>
+              <xpath expr="//field[@name='hide_use_payment_terminal']" position="before">
+                  <field name="account_payment_term_id" required="1"/>
+                  <field name="name" string="Descripción"/>
+              </xpath>
         </field>
     </record>
 </odoo>

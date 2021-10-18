@@ -10,7 +10,7 @@ import pytz
 import xades
 import xmlsig
 from lxml import etree
-import re
+
 from . import abstract
 from .custom_xades.context import create_xades_epes_signature
 
@@ -118,8 +118,6 @@ def sign_xml(cert, pin, xml):
         [str]: XML signed
     """
     policy_id = "https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.2/ResolucionComprobantesElectronicosDGT-R-48-2016_4.2.pdf"
-    #xml = re.sub(r'&([^a-zA-Z#])', r'&amp;\1', xml)
-    xml = xml.replace('&', '&amp;')
     root = etree.fromstring(xml)
     signature = create_xades_epes_signature()
     policy = xades.policy.GenericPolicyId(

@@ -11,7 +11,7 @@ class SaleAdvancePaymentInv(models.TransientModel):
     _inherit = "sale.advance.payment.inv"
 
     def _prepare_invoice_values(self, order, name, amount, so_line):
-        invoice_vals = super(SaleAdvancePaymentInv, self)._prepare_invoice_values(order, name, amount, so_line)
+        invoice_vals = super(SaleAdvancePaymentInv, self)._prepare_invoice_values()
         if order.apply_discount_global and order.percentage_discount_global > 0.0:
             invoice_vals = {}
             invoice_vals = {

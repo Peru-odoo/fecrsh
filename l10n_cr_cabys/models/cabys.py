@@ -20,7 +20,6 @@ CABYS_INTERN_FROM_OFFICIAL = {
 class CAByS(models.Model):
     _name = "cabys"
     _description = "CAByS"
-    _check_company_auto = True
 
     name = fields.Char(
         compute="_compute_name",
@@ -43,40 +42,23 @@ class CAByS(models.Model):
         store=True,
     )
 
-    taxes_ids = fields.Many2many('account.tax','cabys_taxes_rel','cabys_id','tax_id', string='Impuestos en cabys', )
-
-
     @api.depends("code", "description")
     def _compute_name(self):
         for cabys in self:
-            cabys.name = "[{}]{} - {}".format(cabys.tax_percentage, cabys.code, cabys.description)
+            cabys.name = "{} - {}".format(cabys.code, cabys.description)
 
     @api.depends("tax_percentage")
     def _compute_tax_id(self):
-        companies = self.env.user.write_uid.company_ids or self.env.user.company_id
-        if not companies:
-            companies = self.env.company
+        tax_obj = self.env["account.tax"]
         for cabys in self:
-            array_tax = []
-            if companies:
-                for com in companies:
-                    tax_id = self.env["account.tax"].sudo().search([("amount", "=", cabys.tax_percentage),
-                                                                    ("type_tax_use", "=", "sale"),
-                                                                    ("tax_code", "!=", ""),
-                                                                    ('company_id', '=', com.id)
-                                                                    ], limit=1)
-                    if tax_id:
-                        array_tax.append((4, tax_id.id))
-            else:
-                tax_id = self.env["account.tax"].sudo().search([("amount", "=", cabys.tax_percentage),
-                                                                ("type_tax_use", "=", "sale"),
-                                                                ("tax_code", "!=", ""),
-                                                                ], limit=1)
-                if tax_id:
-                    array_tax.append((4, tax_id.id))
-
-            cabys.write({'taxes_ids': array_tax,'tax_id': tax_id.id})
-
+            cabys.tax_id = tax_obj.search(
+                [
+                    ("amount", "=", cabys.tax_percentage),
+                    ("type_tax_use", "=", "sale"),
+                    ("tax_code", "!=", False),
+                ],
+                limit=1,
+            )
 
     def _download(self, query, query_max):
         r = requests.get(CABYS_URI, {"q": query, "top": query_max})
@@ -92,7 +74,7 @@ class CAByS(models.Model):
         self._update_cabys(cabyss)
 
     @api.model
-    def _update_cabys(self, cabyss,company_id=False):
+    def _update_cabys(self, cabyss):
         to_create = []
         for cabys in cabyss:
             current_cabys = self.search([("code", "=", cabys["code"])], limit=1)
@@ -111,33 +93,14 @@ class CAByS(models.Model):
         self.create(to_create)
 
     @api.model
-    def update_tax_ids(self, company_id=False):
-        cabyss = self.sudo().search([])
-        companies = company_id
-        if not company_id:
-            companies = self.env.user.write_uid.company_ids or self.env.user.company_id
-        if not companies:
-            companies = self.env.company
-
+    def update_tax_ids(self):
+        cabyss = self.search([])
         for cabys in cabyss:
-            array_tax = []
-            if companies:
-                for com in companies:
-                    tax_id = self.env["account.tax"].sudo().search([("amount", "=", cabys.tax_percentage),
-                                                                  ("type_tax_use", "in", ("sale","purchase")),
-                                                                  ("tax_code", "!=", ""),
-                                                                  ('company_id', '=', com.id)
-                                                                  ],limit=1)
-                    if tax_id:
-                        array_tax.append((4,tax_id.id))
-
-            else:
-                tax_id = self.env["account.tax"].sudo().search([("amount", "=", cabys.tax_percentage),
-                                                                ("type_tax_use", "=", ("sale","purchase")),
-                                                                ("tax_code", "!=", ""),
-                                                                ], limit=1)
-                if tax_id:
-                    array_tax.append((4, tax_id.id))
-
-            cabys.write({'taxes_ids': array_tax,'tax_id': tax_id.id})
-
+            cabys.tax_id = self.env["account.tax"].search(
+                [
+                    ("amount", "=", cabys.tax_percentage),
+                    ("type_tax_use", "=", "sale"),
+                    ("tax_code", "!=", ""),
+                ],
+                limit=1,
+            )

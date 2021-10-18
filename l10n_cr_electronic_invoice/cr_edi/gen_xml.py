@@ -17,7 +17,6 @@ class Templates:
     NotaDebitoElectronica = utils.get_template("NotaDebitoElectronica.xml.jinja")
     TiqueteElectronico = utils.get_template("TiqueteElectronico.xml.jinja")
     FacturaElectronicaPos = utils.get_template("FacturaElectronicaPos.xml.jinja")
-    NotaCreditoElectronicaPos = utils.get_template("NotaCreditoElectronicaPos.xml.jinja")
 
 
 def mensaje_receptor(
@@ -62,13 +61,6 @@ DOCUMENT_TYPE_TO_TEMPLATE = {
     "ND": Templates.NotaDebitoElectronica,
     "TE": Templates.TiqueteElectronico,
     "FEP": Templates.FacturaElectronicaPos, #Caso especial para factura eletrónica desde POS
-    "NCP": Templates.NotaCreditoElectronicaPos, #Caso especial para nota de crédito eletrónica desde POS
-}
-
-type_template = {
-    'FE' : 'FEP',
-    'NC' : 'NCP',
-    'TE' : 'TE'
 }
 
 def validations(document):
@@ -137,41 +129,55 @@ def validations(document):
 def gen(document):
     # metodo para validaciones
     validations(document)
+
+    fe_pos = 0
+    template = DOCUMENT_TYPE_TO_TEMPLATE[document.tipo_documento]
+    if 'pos_reference' in document:
+        if str(document.pos_reference).find('Orden') != -1 and document.tipo_documento == "FE":
+            fe_pos = 1
+            template = DOCUMENT_TYPE_TO_TEMPLATE['FEP']
+
     issuer = document.company_id
     receiver = document.partner_id
-
-    #TODO: PARA EL CASO DE POS
-    if 'pos_reference' in document:
-        template = DOCUMENT_TYPE_TO_TEMPLATE[type_template[document.tipo_documento]]
+    if document.tipo_documento in ('FE','FEC','FEE','NC'):  # TODO only in this case?
+        if fe_pos: #FACTURACION ELECTRÓNICA A PARTIR DE POS
+            args = {
+                "document": document,
+                "issuer": issuer,
+                "receiver": receiver,
+                "lines": document.lines,
+                "activity_code": document.company_id.pos_activity_id.code,
+                "currency_rate": document.currency_rate,
+                "notes": 'Ninguno',
+                "reference": None,
+                "reference_code": document.reference_code_id,
+            }
+        else: #FACTURACION ELECTRÓNICA A PARTIR DE FACTURACIÓN NORMAL
+            if document.tipo_documento == "FEC":  # TODO only in this case?
+                (issuer, receiver) = (receiver, issuer)
+            args = {
+                "document": document,
+                "issuer": issuer,
+                "receiver": receiver,
+                "lines": document.invoice_line_ids,
+                "activity_code": document.activity_id.code,
+                "currency_rate": document.currency_rate_usd_crc,
+                "notes": document.narration,
+                "reference": document.invoice_id,
+                "reference_code": document.reference_code_id,
+            }
+    if document.tipo_documento == "TE":
         args = {
             "document": document,
             "issuer": issuer,
             "receiver": receiver,
             "lines": document.lines,
-            #"activity_code": document.company_id.pos_activity_id.code,
-            "activity_code": issuer.activity_ids[0].code,
+            "activity_code": document.company_id.pos_activity_id.code,
             "currency_rate": document.currency_rate,
             "notes": None,
-            "reference": document.pos_order_id,
-            "reference_code": document.reference_code_id,
+            "reference": None,
+            "reference_code": None,
         }
-    #TODO: PARA COMPROBANTES DE CONTABILIDAD
-    else:
-        template = DOCUMENT_TYPE_TO_TEMPLATE[document.tipo_documento]
-        if document.tipo_documento == "FEC":  # TODO only in this case?
-            (issuer, receiver) = (receiver, issuer)
-        args = {
-            "document": document,
-            "issuer": issuer,
-            "receiver": receiver,
-            "lines": document.invoice_line_ids,
-            "activity_code": document.activity_id.code,
-            "currency_rate": document.currency_rate_usd_crc,
-            "notes": document.narration,
-            "reference": document.invoice_id,
-            "reference_code": document.reference_code_id,
-        }
-
     render = gen_from_template(template, **args)
     return render
 
@@ -188,30 +194,14 @@ def gen_from_template(
     reference=None,
     reference_code=None,
 ):
-    lineas = document._get_lines_xml(lines)
-    amounts = document.get_amounts(lineas)
+    amounts = document.get_amounts()
     phone_obj_issuer = phonenumbers.parse(
         issuer.phone, issuer.country_id and issuer.country_id.code
     )
-    if 'pos_reference' in document:
-        render = template.render(
-            document=document,
-            activity_code=activity_code,
-            issuer=issuer,
-            receiver=receiver,
-            phone_obj_issuer=None if document.tipo_documento =='TE' else phone_obj_issuer,
-            phone_obj_receiver=None,
-            lines=lines,
-            amounts=amounts,
-            currency_rate=currency_rate,
-            notes=notes,
-            reference=reference,
-            reference_code=reference_code,
-        )
-    else:
+    if document.tipo_documento in ('FE','FEC','FEE','NC'):
+
         phone_obj_receiver = phonenumbers.parse(
-            receiver.phone,
-            (receiver.country_id or issuer.country_id) and (receiver.country_id.code or issuer.country_id.code)
+            receiver.phone, receiver.country_id and receiver.country_id.code
         )
         render = template.render(
             document=document,
@@ -220,7 +210,22 @@ def gen_from_template(
             receiver=receiver,
             phone_obj_issuer=phone_obj_issuer,
             phone_obj_receiver=phone_obj_receiver,
-            lines=lineas,
+            lines=lines,
+            amounts=amounts,
+            currency_rate=currency_rate,
+            notes=notes,
+            reference=reference,
+            reference_code=reference_code,
+        )
+    elif document.tipo_documento=='TE':
+        render = template.render(
+            document=document,
+            activity_code=activity_code,
+            issuer=issuer,
+            receiver=receiver,
+            phone_obj_issuer=phone_obj_issuer,
+            phone_obj_receiver=None,
+            lines=lines,
             amounts=amounts,
             currency_rate=currency_rate,
             notes=notes,

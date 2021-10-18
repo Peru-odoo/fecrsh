@@ -43,35 +43,22 @@ class PosConfig(models.Model):
         :return:
         """
         list  = []
-        model_sequence = self.env['ir.sequence'].sudo()
+        model_sequence = self.env['ir.sequence']
         for i in range(0,3):
-            seq = False
             type = TYPES[i].split('-')
+
             data = {
                 'name': 'Sucursal|' + str(self.sucursal) + '|' + type[1],
                 'code': 'sequence.sucursal.'+str(str(self.sucursal))+'.'+type[0],
                 'implementation': 'no_gap',
                 'padding': 10
             }
-            seq = model_sequence.search([('code', '=', data['code'])], limit=1)
-            if not seq:
-                seq = model_sequence.create(data)
-            if seq and type[0] == 'FE':
-                self.sequence_fe_id = seq
-            elif seq and type[0] == 'NC':
-                self.sequence_nc_id = seq
-            elif seq and type[0] == 'TE':
-                self.sequence_te_id = seq
-            else:
-                print('No se generó la secuencia o no se encontró')
+            list.append(data)
 
-        # seq = model_sequence.search([('name','=',data['name']),('code','=',data['code'])],limit=1)
-        # if not seq:
-        #     seq = model_sequence.create(list)
-        #
-        # self.sequence_fe_id = seq.filtered(lambda fe: fe.code.split('.')[3]=='FE').id
-        # self.sequence_nc_id = seq.filtered(lambda nc: nc.code.split('.')[3]=='NC').id
-        # self.sequence_te_id = seq.filtered(lambda te: te.code.split('.')[3]=='TE').id
+        r = model_sequence.create(list)
+        self.sequence_fe_id = r.filtered(lambda fe: fe.code.split('.')[3]=='FE').id
+        self.sequence_nc_id = r.filtered(lambda nc: nc.code.split('.')[3]=='NC').id
+        self.sequence_te_id = r.filtered(lambda te: te.code.split('.')[3]=='TE').id
 
 
 

@@ -41,11 +41,6 @@
                     </group>
                 </page>
             </notebook>
-
-            <xpath expr="//field[@name='code']" position="after">
-                <field name="sequence_id" string="Secuencia"/>
-                <field name="sequence_refund_id" string="Secuencia Rectificativa"/>
-            </xpath>
         </field>
     </record>
 </odoo>

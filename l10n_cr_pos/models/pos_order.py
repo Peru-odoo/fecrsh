@@ -36,8 +36,6 @@ class PosOrder(models.Model):
     _name = "pos.order"
     _inherit = "pos.order", "mail.thread"
 
-    is_return = fields.Boolean(string='Retorno')
-
     @api.model
     def sequence_number_sync(self, vals):
         tipo_documento = vals.get("tipo_documento", False)
@@ -50,33 +48,12 @@ class PosOrder(models.Model):
             elif (tipo_documento == "TE"and sequence >= session.config_id.sequence_te_id.number_next_actual):
                 session.config_id.sequence_te_id.number_next_actual = sequence + 1
 
-    def _get_type_documento(self,ui_order,vals):
-        if 'is_return' in vals:
-            if vals['is_return']:
-                type_document = 'NC'
-            elif not ui_order.get('partner_id'):
-                type_document = 'TE'
-            else:
-                type_document = 'FE'
-        else:
-            if not ui_order.get('partner_id'):
-                type_document = 'TE'
-            else:
-                type_document = 'FE'
-
-        return type_document
-
-
     @api.model
     def _order_fields(self, ui_order):
         vals = super(PosOrder, self)._order_fields(ui_order)
-        vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
+        vals["tipo_documento"] = 'TE' if not ui_order.get('partner_id') else 'FE'
         vals["sequence"] = ui_order.get("sequence")
         vals["number_electronic"] = ui_order.get("number_electronic")
-        # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO PERTENECE A ESTE MÓDULO
-        if 'return_order_ref' in ui_order:
-            if ui_order.get('return_order_ref') != False:
-                vals['pos_order_id'] = int(ui_order['return_order_ref'])
         return vals
 
     @api.model
@@ -87,8 +64,6 @@ class PosOrder(models.Model):
         if vals["tipo_documento"]=='FE':
             seq = session.config_id.sequence_fe_id.next_by_id()
         elif vals["tipo_documento"]=='TE':
-            seq = session.config_id.sequence_te_id.next_by_id()
-        elif vals["tipo_documento"] == 'NC':
             seq = session.config_id.sequence_te_id.next_by_id()
         else:
             raise UserError(
@@ -149,7 +124,7 @@ class PosOrder(models.Model):
     def action_pos_order_paid(self):
         for order in self:
             if order.pos_order_id:
-                order.name = order.session_id.config_id.sequence_nc_id._next()
+                order.name = order.session_id.config_id.return_sequence_id._next()
         return super(PosOrder, self).action_pos_order_paid()
 
     def refund(self):
@@ -434,22 +409,30 @@ class PosOrder(models.Model):
             if not docName:
                 continue
             if not docName.isdigit() or doc.company_id.frm_ws_ambiente == "disabled":
-                _logger.warning("MAB - Valida Hacienda - Omitir factura %s", docName)
+                _logger.warning("MAB - Valida Hacienda - skipped Invoice %s", docName)
                 continue
             if not doc.xml_comprobante:
-                if doc.is_return == True and doc.amount_total > 0:
-                    _logger.error(
-                        "MAB - Error documento %s tiene monto positivo, pero es nota de crédito en POS. ",
-                        doc.number_electronic,
-                    )
-                    continue
-                if doc.is_return == False and doc.amount_total < 0:
-                    _logger.error(
-                        "MAB - Error documento %s tiene monto negativo, cuando no es nota de crédito POS. ",
-                        doc.number_electronic,
-                    )
-                    continue
-
+                if not doc.pos_order_id:
+                    if doc.amount_total < 0:
+                        doc.state_tributacion = "error"
+                        _logger.error(
+                            "MAB - Error documento %s tiene monto negativo pero no tiene documento referencia",
+                            doc.number_electronic,
+                        )
+                        continue
+                else:
+                    if doc.amount_total >= 0:
+                        doc.tipo_documento = "ND"
+                        # razon_referencia = "nota debito"
+                    else:
+                        doc.tipo_documento = "NC"
+                        # tipo_documento_referencia = "FE"
+                        # numero_documento_referencia = doc.pos_order_id.number_electronic
+                        # codigo_referencia = doc.reference_code_id.code
+                        # razon_referencia = "nota credito"
+                    # numero_documento_referencia = doc.pos_order_id.number_electronic
+                    # fecha_emision_referencia = doc.pos_order_id.date_issuance
+                    # codigo_referencia = doc.reference_code_id.code
                 now_utc = datetime.datetime.now(pytz.timezone("UTC"))
                 now_cr = now_utc.astimezone(pytz.timezone("America/Costa_Rica"))
                 dia = docName[3:5]
@@ -618,12 +601,12 @@ class PosOrder(models.Model):
             else:
                 if response_text.find("ya fue recibido anteriormente") != -1:
                     doc.state_tributacion = "procesando"
-                    # doc.message_post(
-                    #     subject=_("Error"),
-                    #     body=_("Ya recibido anteriormente, se pasa a consultar"),
-                    # )
+                    doc.message_post(
+                        subject=_("Error"),
+                        body=_("Ya recibido anteriormente, se pasa a consultar"),
+                    )
                 elif doc.error_count > 10:
-                    # doc.message_post(subject=_("Error"), body=response_text)
+                    doc.message_post(subject=_("Error"), body=response_text)
                     doc.state_tributacion = "error"
                     _logger.error(
                         "MAB - Invoice: %s  Status: %s Error sending XML: %s",
@@ -634,7 +617,7 @@ class PosOrder(models.Model):
                 else:
                     doc.error_count += 1
                     doc.state_tributacion = "procesando"
-                    # doc.message_post(subject=_("Error"), body=response_text)
+                    doc.message_post(subject=_("Error"), body=response_text)
                     _logger.error(
                         "MAB - Invoice: %s  Status: %s Error sending XML: %s",
                         doc.name,

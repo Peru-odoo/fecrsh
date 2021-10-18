@@ -6,8 +6,7 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <field name="type" position="after">
-<!--                <field name="cabys_id" attrs="{'required': True}" domain="['|',('company_id','in',allowed_company_ids),('company_id','=', False)]"/>-->
-                <field name="cabys_id" attrs="{'required': True}" />
+                <field name="cabys_id" attrs="{'required': True}"/>
                 <field name="tax_cabys" attrs="{'readonly': True}" force_save="1" invisible="1"/>
                 <field name="code_cabys" invisible="1"/>
             </field>

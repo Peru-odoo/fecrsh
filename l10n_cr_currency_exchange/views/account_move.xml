@@ -5,11 +5,12 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@name='journal_div']" position="after">
-                 <field name="currency_rate_usd_crc" groups="base.group_multi_currency" string="Tipo de cambio"
-                  attrs="{'invisible': [('invoice_date', '=', False)]}"/>
-            </xpath>
+            <field name="currency_id" position="after">
+                <field name="currency_rate_usd_crc"
+                    attrs="{'invisible': [('invoice_date', '=', False)]}"
+                    groups="base.group_multi_currency"
+                />
+            </field>
         </field>
     </record>
 </odoo>
-

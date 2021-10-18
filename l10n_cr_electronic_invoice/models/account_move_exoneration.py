@@ -127,19 +127,17 @@ class AccountInvoice(models.Model):
 
     def _check_percentage_global(self):
         for inv in self:
-            inv.re_calcule = False
-            if inv.apply_discount_global:
-                if len(inv.invoice_line_ids) > 0:
-                    per = inv._percent_discount(inv.percentage_discount_global, len(inv.invoice_line_ids.ids))
-                    sw = 0
-                    for line in inv.invoice_line_ids:
-                        if line.discount != per:
-                            sw = 1
-                            break
-                    if sw == 1:
-                        inv.re_calcule = True
-                    else:
-                        inv.re_calcule = False
+            if len(inv.invoice_line_ids) > 0:
+                per = inv._percent_discount(inv.percentage_discount_global, len(inv.invoice_line_ids.ids))
+                sw=0
+                for line in inv.invoice_line_ids:
+                    if line.discount != per:
+                        sw=1
+                        break
+                if sw==1:
+                    inv.re_calcule = True
+                else:
+                    inv.re_calcule = False
 
     def write(self, vals):
         r = super(AccountInvoice, self).write(vals)

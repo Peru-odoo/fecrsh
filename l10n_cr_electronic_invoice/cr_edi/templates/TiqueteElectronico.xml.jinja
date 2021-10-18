@@ -44,18 +44,18 @@
             <UnidadMedida>{{line.product_id.uom_id.code}}</UnidadMedida>
             <Detalle>{{line.name[:200]}}</Detalle>
             <PrecioUnitario>{{line.price_unit}}</PrecioUnitario>
-            <MontoTotal>{{(line.price_unit * line.qty)|round(5)}}</MontoTotal>
+            <MontoTotal>{{(line.price_unit * line.qty)|round(2)}}</MontoTotal>
             <Descuento>
-                <MontoDescuento>{{((line.price_unit * line.qty) * (line.discount/100))|round(5)}}</MontoDescuento>
+                <MontoDescuento>{{((line.price_unit * line.qty) * (line.discount/100))|round(2)}}</MontoDescuento>
                 <NaturalezaDescuento>{{"Descuento Comercial"}}</NaturalezaDescuento>
             </Descuento>
-            <SubTotal>{{(line.price_subtotal)|round(5)}}</SubTotal>
+            <SubTotal>{{(line.price_subtotal)|round(2)}}</SubTotal>
             {% for tax in line.tax_ids_after_fiscal_position %}
             <Impuesto>
                 <Codigo>{{tax.tax_code}}</Codigo>
                 <CodigoTarifa>{{tax.iva_tax_code}}</CodigoTarifa>
                 <Tarifa>{{tax.amount}}</Tarifa>
-                <Monto>{{(line.price_subtotal * (tax.amount / 100))|round(5)}}</Monto>
+                <Monto>{{(line.price_subtotal * (tax.amount / 100))|round(2)}}</Monto>
                 {# <Exoneracion>
                     <TipoDocumento>{{receiver.type_exoneration.code}}</TipoDocumento>
                     <NumeroDocumento>{{receiver.exoneration_number}}</NumeroDocumento>
@@ -66,8 +66,8 @@
                 </Exoneracion> #}
             </Impuesto>
             {% endfor %}
-            <ImpuestoNeto>{{(line.price_subtotal_incl - line.price_subtotal)|round(5)}}</ImpuestoNeto>
-            <MontoTotalLinea>{{(line.price_subtotal_incl)|round(5)}}</MontoTotalLinea>
+            <ImpuestoNeto>{{(line.price_subtotal_incl - line.price_subtotal)|round(2)}}</ImpuestoNeto>
+            <MontoTotalLinea>{{(line.price_subtotal_incl)|round(2)}}</MontoTotalLinea>
         </LineaDetalle>
         {% endfor %}
     </DetalleServicio>
@@ -76,21 +76,21 @@
             <CodigoMoneda>{{document.currency_id.name}}</CodigoMoneda>
             <TipoCambio>{{currency_rate}}</TipoCambio>
         </CodigoTipoMoneda>
-        <TotalServGravados>{{(amounts["service_taxed"])|round(5)}}</TotalServGravados>
-        <TotalServExentos>{{(amounts["service_no_taxed"])|round(5)}}</TotalServExentos>
-        <TotalServExonerado>{{(amounts["service_exempt"])|round(5)}}</TotalServExonerado>
-        <TotalMercanciasGravadas>{{(amounts["product_taxed"])|round(5)}}</TotalMercanciasGravadas>
-        <TotalMercanciasExentas>{{(amounts["product_no_taxed"])|round(5)}}</TotalMercanciasExentas>
-        <TotalMercExonerada>{{(amounts["product_exempt"])|round(5)}}</TotalMercExonerada>
-        <TotalGravado>{{(amounts["service_taxed"] + amounts["product_taxed"])|round(5)}}</TotalGravado>
-        <TotalExento>{{(amounts["service_no_taxed"] + amounts["product_no_taxed"])|round(5)}}</TotalExento>
-        <TotalExonerado>{{(amounts["service_exempt"] + amounts["product_exempt"])|round(5)}}</TotalExonerado>
-        <TotalVenta>{{(amounts["service_taxed"] + amounts["service_no_taxed"] + amounts["service_exempt"] + amounts["product_taxed"] + amounts["product_no_taxed"] + amounts["product_exempt"])|round(5)}}</TotalVenta>
-        <TotalDescuentos>{{(amounts["discount"])|round(5)}}</TotalDescuentos>
-        <TotalVentaNeta>{{(document.amount_total-document.amount_tax)|round(5)}}</TotalVentaNeta>
-        <TotalImpuesto>{{(document.amount_tax)|round(5)}}</TotalImpuesto>
-        <TotalOtrosCargos>{{(amounts["other_charges"])|round(5)}}</TotalOtrosCargos>
-        <TotalComprobante>{{(document.amount_total)|round(5)}}</TotalComprobante>
+        <TotalServGravados>{{(amounts["service_taxed"])|round(2)}}</TotalServGravados>
+        <TotalServExentos>{{(amounts["service_no_taxed"])|round(2)}}</TotalServExentos>
+        <TotalServExonerado>{{(amounts["service_exempt"])|round(2)}}</TotalServExonerado>
+        <TotalMercanciasGravadas>{{(amounts["product_taxed"])|round(2)}}</TotalMercanciasGravadas>
+        <TotalMercanciasExentas>{{(amounts["product_no_taxed"])|round(2)}}</TotalMercanciasExentas>
+        <TotalMercExonerada>{{(amounts["product_exempt"])|round(2)}}</TotalMercExonerada>
+        <TotalGravado>{{(amounts["service_taxed"] + amounts["product_taxed"])|round(2)}}</TotalGravado>
+        <TotalExento>{{(amounts["service_no_taxed"] + amounts["product_no_taxed"])|round(2)}}</TotalExento>
+        <TotalExonerado>{{(amounts["service_exempt"] + amounts["product_exempt"])|round(2)}}</TotalExonerado>
+        <TotalVenta>{{(amounts["service_taxed"] + amounts["service_no_taxed"] + amounts["service_exempt"] + amounts["product_taxed"] + amounts["product_no_taxed"] + amounts["product_exempt"])|round(2)}}</TotalVenta>
+        <TotalDescuentos>{{(amounts["discount"])|round(2)}}</TotalDescuentos>
+        <TotalVentaNeta>{{(document.amount_total-document.amount_tax)|round(2)}}</TotalVentaNeta>
+        <TotalImpuesto>{{(document.amount_tax)|round(2)}}</TotalImpuesto>
+        <TotalOtrosCargos>{{(amounts["other_charges"])|round(2)}}</TotalOtrosCargos>
+        <TotalComprobante>{{(document.amount_total)|round(2)}}</TotalComprobante>
     </ResumenFactura>
     <Otros>
         <OtroTexto>{{notes}}</OtroTexto>

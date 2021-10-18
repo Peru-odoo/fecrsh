@@ -7,8 +7,7 @@
             <tree>
                 <field name="code"/>
                 <field name="description"/>
-                <field name="taxes_ids"/>
-                <field name="tax_percentage"/>
+                <field name="tax_id"/>
             </tree>
         </field>
     </record>
@@ -22,23 +21,20 @@
                     <group>
                         <field name="code"/>
                         <field name="description"/>
-                        <field name="tax_percentage"/>
-                    </group>
-                    <group>
-                        <field name="taxes_ids">
-                            <tree>
-                                <field name="name"/>
-                                <field name="iva_tax_code"/>
-                                <field name="type_tax_use"/>
-                                <field name="company_id"/>
-                            </tree>
-                        </field>
+                        <field name="tax_id"/>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <record id="cabys_view_search" model="ir.ui.view">
+        <field name="name">cabys.view.search</field>
+        <field name="model">cabys</field>
+        <field name="arch" type="xml">
+            <search/>
+        </field>
+    </record>
 
     <record id="cabys_action" model="ir.actions.act_window">
         <field name="name">CAByS</field>

@@ -1,6 +1,6 @@
 {
     "name": "FECR",
-    "version": "14.0.6.17",
+    "version": "14.0.4.0",
     "category": "Accounting",
     "summary": "Factura electrónica para Costa Rica",
     "author": "XALACHI",
@@ -17,8 +17,7 @@
         "l10n_cr_currency_exchange",
         "l10n_cr_territories",
         "uom",
-        "sale",
-        "fetchmail"
+        "sale"
     ],
     "data": [
         # security
@@ -26,9 +25,7 @@
         "security/rule.xml",
         # templates
         # data
-        "data/decimal_precision_einv.xml",
         "data/aut_ex_data.xml",
-        "data/reference_document_data.xml",
         "data/config_settings.xml",
         "data/currency_data.xml",
         "data/identification_type_data.xml",
@@ -53,7 +50,6 @@
         "views/resolution_views.xml",
         "views/uom_views.xml",
         "views/res_partner_exonerated_views.xml",
-        "views/fetchmail_views.xml",
 
         #Vistas para exoneración
         "views/sale_views.xml",

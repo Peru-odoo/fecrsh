@@ -173,4 +173,3 @@ class SaleOrderLine(models.Model):
         #                 #     break
         #                 a=x
         #
-

@@ -1,6 +1,6 @@
 {
     "name": "L10N CR CAByS",
-    "version": "14.0.2.3",
+    "version": "2.1",
     "author": "HomebrewSoft",
     "website": "https://homebrewsoft.dev",
     "license": "LGPL-3",
@@ -21,7 +21,5 @@
         # views
         "views/cabys.xml",
         "views/product_template.xml",
-        # wizard
-        "wizard/cabys_wizard.xml",
     ],
 }
