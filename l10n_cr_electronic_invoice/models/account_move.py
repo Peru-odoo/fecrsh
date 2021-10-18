@@ -105,7 +105,7 @@ class AccountInvoice(models.Model):
         copy=False,
     )
     ignore_total_difference = fields.Boolean()
-    to_process = fields.Boolean(compute='_compute_to_process', search='_search_to_process')
+    to_process = fields.Boolean(compute='_compute_to_process', search='_search_to_process', copy=False, store=True)
 
     usd_rate = fields.Float(compute="_compute_usd_currency_id",)
 
