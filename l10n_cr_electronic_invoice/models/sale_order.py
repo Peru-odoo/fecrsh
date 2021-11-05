@@ -28,17 +28,6 @@ class SaleOrder(models.Model):
             self.partner_tax_id = self.partner_id.exoneration_number.tax_id
         else:
             self.partner_tax_id = False
-        # res = {}
-        # if self.partner_id:
-        #     partner_tax = self.env['res.partner.tax'].sudo().search(
-        #         ['|', ('partner_id', '=', self.partner_id.id), ('vat', '=', self.partner_id.vat)])
-        #     # if not partner_tax:
-        #     #     res['warning'] = {'title': _('Ups'), 'message': _('No se encontró un impuesto en el sistema con el porcentage de exoneración de: ' + str(self.partner_id.tax))}
-        #     #     return res
-        #     if partner_tax:
-        #         self.partner_tax_id = partner_tax.tax_id
-        #     else:
-        #         self.partner_tax_id = False
 
     @api.depends('has_exoneration', 'due_exoneration')
     def computed_expired(self):
