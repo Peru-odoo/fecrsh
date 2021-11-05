@@ -5,6 +5,9 @@ import requests
 from odoo import _, api, models
 from odoo.exceptions import UserError
 
+import logging
+_logger = logging.getLogger(__name__)
+
 NIF_API = "https://api.hacienda.go.cr/fe/ae"
 
 
@@ -36,26 +39,33 @@ class Partner(models.Model):
     def _get_name_from_vat(self):
         if not self.vat:
             return
-        response = requests.get(NIF_API, params={"identificacion": self.vat})
-        if response.status_code == 200:
-            response_json = response.json()
-            self.name = response_json["nombre"]
-            self.identification_id = self.identification_id.search(
-                [("code", "=", response_json["tipoIdentificacion"])], limit=1
-            )
-            return
-        elif response.status_code == 404:
-            title = "VAT Not found"
-            message = "The VAT is not on the API"
-        elif response.status_code == 400:
-            title = "API Error 400"
-            message = "Bad Request"
-        else:
-            title = "Unknown Error"
-            message = "Unknown error in the API request"
-        return {
-            "warning": {
-                "title": title,
-                "message": message,
+
+        try:
+            response = requests.get(NIF_API, params={"identificacion": self.vat})
+            if response.status_code == 200:
+                response_json = response.json()
+                self.name = response_json["nombre"]
+                self.identification_id = self.identification_id.search(
+                    [("code", "=", response_json["tipoIdentificacion"])], limit=1
+                )
+                return
+            elif response.status_code == 404:
+                title = "VAT Not found"
+                message = "The VAT is not on the API"
+            elif response.status_code == 400:
+                title = "API Error 400"
+                message = "Bad Request"
+            else:
+                title = "Unknown Error"
+                message = "Unknown error in the API request"
+            return {
+                "warning": {
+                    "title": title,
+                    "message": message,
+                }
             }
-        }
+        except Exception as e:
+            _logger.info("Error en la conexión")
+            pass
+        else:
+            pass

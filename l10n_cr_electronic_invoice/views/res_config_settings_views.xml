@@ -24,6 +24,23 @@
                     </div>
                 </div>
             </xpath>
+
+
+            <xpath expr="//div[@id='smallest_coinage_currency']" position="after">
+                <div class="col-12 col-lg-6 o_setting_box" id="config_einvoice_fields_add">
+                    <div class="o_setting_left_pane">
+                          <field name="einvoice_fields_add" class="oe_inline"/>
+                    </div>
+                    <div class="o_setting_right_pane" id="config_einvoice_fields_add">
+                        <label for="einvoice_fields_add"/>
+                        <div class="text-muted">
+                            Permitirá mostrar campos adicionales en la factura de cliente y xml para envío a Hacienda
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+
+
         </field>
     </record>
 </odoo>

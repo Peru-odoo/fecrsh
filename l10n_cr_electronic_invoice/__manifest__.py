@@ -1,6 +1,6 @@
 {
     "name": "FECR",
-    "version": "14.0.4.0",
+    "version": "14.0.7.3",
     "category": "Accounting",
     "summary": "Factura electrónica para Costa Rica",
     "author": "XALACHI",
@@ -17,15 +17,18 @@
         "l10n_cr_currency_exchange",
         "l10n_cr_territories",
         "uom",
-        "sale"
+        "sale",
+        "fetchmail"
     ],
     "data": [
         # security
         "security/ir.model.access.csv",
-        "security/rule.xml",
+        #"security/rule.xml",
         # templates
         # data
+        "data/decimal_precision_einv.xml",
         "data/aut_ex_data.xml",
+        "data/reference_document_data.xml",
         "data/config_settings.xml",
         "data/currency_data.xml",
         "data/identification_type_data.xml",
@@ -44,16 +47,21 @@
         "views/account_journal_views.xml",
         "views/identification_type_views.xml",
         "views/res_company_views.xml",
+        "views/account_invoice_import_config_views.xml",
+        "views/res_config_settings_views.xml",
         "views/res_partner_views.xml",
         "views/resolution_views.xml",
         "views/uom_views.xml",
         "views/res_partner_exonerated_views.xml",
+        "views/fetchmail_views.xml",
 
         #Vistas para exoneración
         "views/sale_views.xml",
         "views/account_move_exoneration.xml",
         # wizard
         "wizard/account_move_reversal_view.xml",
+        "views/account_tax_views.xml",  # Nuevo 18-10-2021
+        "wizard/account_report_iva_wizard.xml",  # Nuevo 14-10-2021
     ],
     "external_dependencies": {
         "python": [

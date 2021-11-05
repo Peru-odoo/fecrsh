@@ -38,4 +38,22 @@
         <field name="implementation">no_gap</field>
         <field name="padding">10</field>
     </record>
+
+
+
+    <!--Nuevo 2021-10-21-->
+    <record id="journal_sequence_normal_invoice" model="ir.sequence">
+        <field name="name">Secuencia factura de clientes</field>
+        <field name="code">sequence.normal.journal.FACT</field>
+        <field name="prefix"/>
+        <field name="implementation">no_gap</field>
+        <field name="padding">6</field>
+    </record>
+    <record id="journal_sequence_normal_r_invoice" model="ir.sequence">
+        <field name="name">Secuencia rectificativa factura de clientes</field>
+        <field name="code">sequence.normal.journal.RFACT</field>
+        <field name="prefix"/>
+        <field name="implementation">no_gap</field>
+        <field name="padding">6</field>
+    </record>
 </odoo>

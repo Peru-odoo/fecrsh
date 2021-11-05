@@ -4,6 +4,11 @@ from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, date
 
+IVA_CONDITION = [("gecr", "Genera crédito IVA"),
+                  ("crpa", "Genera crédito parcial del IVA"),
+                  ("bica", "Bienes de capital"),
+                  ("gcnc", "El gasto corriente no genera crédito"),
+                  ("prop", "Proporcionalidad"), ]
 
 class AccountInvoice(models.Model):
     _inherit = "account.move"
@@ -19,6 +24,9 @@ class AccountInvoice(models.Model):
     re_calcule = fields.Boolean(default=False)
     amount_gravada = fields.Monetary()
     amount_exonerated = fields.Monetary()
+
+    iva_condition = fields.Selection(IVA_CONDITION, string=u"Condición IVA", required=False)
+
 
     def _default_date(self):
         return datetime.now().date()
@@ -127,17 +135,19 @@ class AccountInvoice(models.Model):
 
     def _check_percentage_global(self):
         for inv in self:
-            if len(inv.invoice_line_ids) > 0:
-                per = inv._percent_discount(inv.percentage_discount_global, len(inv.invoice_line_ids.ids))
-                sw=0
-                for line in inv.invoice_line_ids:
-                    if line.discount != per:
-                        sw=1
-                        break
-                if sw==1:
-                    inv.re_calcule = True
-                else:
-                    inv.re_calcule = False
+            inv.re_calcule = False
+            if inv.apply_discount_global:
+                if len(inv.invoice_line_ids) > 0:
+                    per = inv._percent_discount(inv.percentage_discount_global, len(inv.invoice_line_ids.ids))
+                    sw = 0
+                    for line in inv.invoice_line_ids:
+                        if line.discount != per:
+                            sw = 1
+                            break
+                    if sw == 1:
+                        inv.re_calcule = True
+                    else:
+                        inv.re_calcule = False
 
     def write(self, vals):
         r = super(AccountInvoice, self).write(vals)
