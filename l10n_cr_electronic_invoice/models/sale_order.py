@@ -37,7 +37,8 @@ class SaleOrder(models.Model):
                 if order.has_exoneration and order.due_exoneration:
                     order.is_expired = self.func_expiration(order.due_exoneration)
 
-    @api.onchange('has_exoneration', 'partner_tax_id', 'date_expiration')
+
+    @api.onchange('has_exoneration', 'partner_tax_id', 'due_exoneration')
     def _onchange_sale_tax(self):
         for order in self:
             order.is_expired = False
@@ -46,6 +47,7 @@ class SaleOrder(models.Model):
                 for line in order.order_line:
                     line.tax_id = {}
                     line.tax_id = order.partner_tax_id
+                    
 
     def _percent_discount(self, p, t):
         if t > 0:
