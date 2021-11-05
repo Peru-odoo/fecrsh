@@ -129,7 +129,7 @@ class AccountInvoice(models.Model):
                 invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process
             )
 
-    metodo_pago_partner = fields.Many2one("payment.methods", related='partner_id.payment_methods_id', compute='_compute_payment_methods')
+    metodo_pago_partner = fields.Many2one("payment.methods", related='partner_id.payment_methods_id', compute='_compute_payment_methods', string='Mét.pago.partner')
 
     payment_method_id = fields.Many2one("payment.methods", string=u'Método de Pago', readonly=False, store=True)
 

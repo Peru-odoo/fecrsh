@@ -10,10 +10,7 @@ class AccountConfigSettings(models.TransientModel):
                                          implied_group='account.group_account_manager')
     einvoice_fields_add = fields.Boolean(string=u"Agregar datos comerciales en XML",implied_group='account.group_account_manager')
 
-    invoice_import_ids = fields.Many2one(
-        comodel_name="account.move.import.config",
-        inverse_name="company_id",
-        string=u'Configuración para importar facturas.'
+    invoice_import_ids = fields.Many2one(comodel_name="account.move.import.config",string=u'Configuración para importar facturas.'
     )
 
     def set_values(self):

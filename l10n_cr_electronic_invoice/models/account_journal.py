@@ -37,8 +37,8 @@ class AccountJournalInherit(models.Model):
         help="If is checked, the documents related to this journal will be sended to the API (staging or production, based on company configuration)",
     )
 
-    sequence_id = fields.Many2one('ir.sequence')
-    sequence_refund_id = fields.Many2one('ir.sequence')
+    sequence_id = fields.Many2one('ir.sequence', string='Secuencia.')
+    sequence_refund_id = fields.Many2one('ir.sequence', string='Secuencia Rect.')
 
     @api.model
     def set_sequences(self):

@@ -134,13 +134,13 @@ class AccountReportIva(models.TransientModel):
         return self.env['account.tax'].sudo().search(domain)
 
     sale_tax_ids = fields.Many2many('account.tax','report_iva_wizar_sale_tax_rel','report_iva_id','tax_id',
-                                    string='Impuestos', default=_default_sale_taxes) #Tipo de impuesto
+                                    string='Impuestos.', default=_default_sale_taxes) #Tipo de impuesto
 
     xls_filename = fields.Char(u'Nombre de fichero')
     xls_file = fields.Binary(u'Descargar reporte', readonly=True)
 
-    @api.onchange('pruchase_iva_condition')
-    def _onchange_pruchase_iva_condition(self):
+    @api.onchange('purchase_iva_condition')
+    def _onchange_purchase_iva_condition(self):
         if self.purchase_iva_condition:
             if self.purchase_iva_condition == 'acreditable':
                 self.sale_iva_condition = 'acreditable'

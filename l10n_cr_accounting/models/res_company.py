@@ -21,5 +21,5 @@ class Company(models.Model):
     def_activity_id = fields.Many2one(
         comodel_name="economic_activity",
         string="Default Economic activity",
-        required=True,
+        required=True, store=True
     )

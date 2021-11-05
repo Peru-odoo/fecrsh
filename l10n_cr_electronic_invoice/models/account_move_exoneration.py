@@ -66,7 +66,7 @@ class AccountInvoice(models.Model):
     #                 raise UserError(_('El porcentaje debe ser mayor a 0'))
     #             inv.calc_discount()
 
-    @api.onchange('has_exoneration', 'partner_tax_id', 'date_expiration')
+    @api.onchange('has_exoneration', 'partner_tax_id', 'due_exoneration')
     def _onchange_sale_tax(self):
         for inv in self:
             inv.is_expired = False

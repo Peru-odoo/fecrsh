@@ -26,7 +26,7 @@ class AccountInvoice(models.Model):
         copy=False,
         readonly=True,
         states={"draft": [("readonly", False)]},
-        string="Reference",
+        string="Invoice Reference",
     )
     invoice_amount_text = fields.Char(
         compute="_compute_invoice_amount_text",
@@ -71,8 +71,8 @@ class AccountInvoice(models.Model):
         return [("id", "in", self.env.user.company_id.activity_ids.ids)]
 
     def _default_activity_id(self):
-        if self.env.user.company_id.def_activity_id:
-            return self.env.user.company_id.def_activity_id
+        if self.company_id.def_activity_id:
+            return self.company_id.def_activity_id
         else:
             return False
 
