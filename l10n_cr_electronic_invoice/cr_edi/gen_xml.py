@@ -72,7 +72,7 @@ type_template = {
 }
 
 def validations(document):
-    if document.tipo_documento in ('FE','FEC','FEE'):
+    if document.tipo_documento in ('FE','FEC'):
         if not document.partner_id.phone:
             raise UserError(_("El cliente debe tener un número de teléfono."))
         elif not document.partner_id.country_id:
@@ -100,6 +100,28 @@ def validations(document):
             raise UserError(_("La compañia debe tener un tipo de documento."))
         elif not document.company_id.vat:
             raise UserError(_("La compañia debe tener un número de documento de identidad."))
+
+    elif document.tipo_documento in ('FEE'):
+
+        if not document.company_id.phone:
+            raise UserError(_("La compañia debe tener un número de teléfono."))
+        elif not document.company_id.country_id:
+            raise UserError(_("La compañia debe tener un país."))
+        elif not document.company_id.state_id:
+            raise UserError(_("La compañia debe tener una provincia."))
+        elif not document.company_id.county_id:
+            raise UserError(_("La compañia debe tener un cantón."))
+        elif not document.company_id.district_id:
+            raise UserError(_("La compañia debe tener un distrito."))
+        elif not document.company_id.neighborhood_id:
+            raise UserError(_("La compañia debe tener un barrio."))
+        elif not document.company_id.email:
+            raise UserError(_("La compañia debe tener un email."))
+        elif not document.company_id.identification_id:
+            raise UserError(_("La compañia debe tener un tipo de documento."))
+        elif not document.company_id.vat:
+            raise UserError(_("La compañia debe tener un número de documento de identidad."))
+
 
     elif document.tipo_documento == 'TE':
 

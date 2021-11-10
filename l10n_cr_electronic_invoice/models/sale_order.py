@@ -47,7 +47,7 @@ class SaleOrder(models.Model):
                 for line in order.order_line:
                     line.tax_id = {}
                     line.tax_id = order.partner_tax_id
-                    
+
 
     def _percent_discount(self, p, t):
         if t > 0:
