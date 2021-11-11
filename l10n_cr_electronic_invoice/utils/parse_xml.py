@@ -186,6 +186,12 @@ def data_xml(self, att, invoice_import_ids):
         if invoice_import_ids.supplier_metodo_pago:
             payment_method_id = invoice_import_ids.supplier_metodo_pago
 
+        invoice_line_ids = False
+        if line_type != 'line_no_create': #Para el caso de que no desee crear líneas en las facturas.
+            invoice_line_ids = data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
+
+
+
         if r:
             values = {
                 'name': '/',
@@ -206,7 +212,7 @@ def data_xml(self, att, invoice_import_ids):
                 'payment_method_id': payment_method_id.id if payment_method_id else (medio_pago.id or False),
                 'amount_tax_electronic_invoice': amount_tax_electronic_invoice,
                 'amount_total_electronic_invoice': amount_total_electronic_invoice,
-                'invoice_line_ids': data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id),
+                'invoice_line_ids': invoice_line_ids,
                 'company_id': company.id,
                 'from_mail': True,
                 'fname_xml_supplier_approval': att.fname,

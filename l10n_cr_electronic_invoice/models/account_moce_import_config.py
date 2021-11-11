@@ -4,8 +4,7 @@ from odoo.exceptions import ValidationError
 
 TYPE_PRODUCT = [('product_create','Crear producto en factura.'),
                 ('product_no_create','No crear producto en factura.'),
-                ('product_default','Asignar producto por defecto para factura.'),
-                ('line_no_create','No crear líneas o  detalle en factura.')]
+                ('product_default','Asignar producto por defecto para factura.')]
 class AccountMoveImportConfig(models.Model):
     _name = "account.move.import.config"
     _description = "Configuracion para importar Facturas de Proveedor"
