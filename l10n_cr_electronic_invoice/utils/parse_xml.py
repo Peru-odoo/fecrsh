@@ -140,10 +140,15 @@ def data_xml(self, att, invoice_import_ids):
                                                          ("company_id", "=", False),
                                                          ], limit=1, )
 
+        #plazos de pago
+        invoice_payment_term_id = False
+        if invoice_import_ids.supplier_plazo_pago:
+            invoice_payment_term_id = invoice_import_ids.supplier_plazo_pago
+
         if partner:
             partner_id = partner.id
         else:
-            partner_id = create_partner(self, root, namespaces, company)
+            partner_id = create_partner(self, root, namespaces, company, invoice_payment_term_id)
             # _logger.error("The provider with id {} does not exist. Please create it in the system first.").format(emisor)
             # r = 0
 
@@ -177,6 +182,10 @@ def data_xml(self, att, invoice_import_ids):
         # Tipo de línea en el detalle del comprobante
         line_type = invoice_import_ids.line_type
 
+        payment_method_id = False
+        if invoice_import_ids.supplier_metodo_pago:
+            payment_method_id = invoice_import_ids.supplier_metodo_pago
+
         if r:
             values = {
                 'name': '/',
@@ -193,15 +202,16 @@ def data_xml(self, att, invoice_import_ids):
                 # 'invoice_date': invoice_date,
                 'currency_id': currency_id,
                 'partner_id': partner_id,
-                'invoice_payment_term_id': termino_pago.id or False,
-                'payment_method_id': medio_pago.id or False,
+                'invoice_payment_term_id': invoice_payment_term_id.id if invoice_payment_term_id else (termino_pago.id or False),
+                'payment_method_id': payment_method_id.id if payment_method_id else (medio_pago.id or False),
                 'amount_tax_electronic_invoice': amount_tax_electronic_invoice,
                 'amount_total_electronic_invoice': amount_total_electronic_invoice,
                 'invoice_line_ids': data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id),
                 'company_id': company.id,
                 'from_mail': True,
                 'fname_xml_supplier_approval': att.fname,
-                'xml_supplier_approval': xml_code
+                'xml_supplier_approval': xml_code,
+                #'invoice_payment_term_id': invoice_payment_term_id,
 
             }
 
@@ -369,7 +379,7 @@ def data_line(self, att, lines, account, tax_ids, line_type, product_product_id,
     return array_lines
 
 
-def create_partner(self, root, namespaces, company):
+def create_partner(self, root, namespaces, company, invoice_payment_term_id):
     emisor = root.find("Emisor")
     commercial_name_tag = root.find("Emisor").find("NombreComercial")
     email_tag = root.find("Emisor").find("CorreoElectronico")
@@ -433,6 +443,10 @@ def create_partner(self, root, namespaces, company):
     if street_tag is not None:
         street = street_tag.text
 
+    property_supplier_payment_term_id = False
+    if invoice_payment_term_id:
+        property_supplier_payment_term_id = invoice_payment_term_id.id
+
     partner_vals = {
         'type': False,
         'name': name,
@@ -448,7 +462,8 @@ def create_partner(self, root, namespaces, company):
         'street': street,
         'email': email,
         'commercial_name': commercial_name,
-        'supplier_rank': 999
+        'supplier_rank': 999,
+        'property_supplier_payment_term_id': property_supplier_payment_term_id,
     }
 
     partner = self.env['res.partner'].sudo().create(partner_vals)

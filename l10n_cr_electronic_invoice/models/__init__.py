@@ -12,6 +12,7 @@ from . import product_template
 from . import res_company
 from . import res_config_settings
 from . import account_move_import_config
+from . import account_moce_import_extend_config
 from . import res_partner_tax
 from . import res_partner
 from . import resolution
