@@ -125,10 +125,10 @@ class FetchmailServer(models.Model):
                         pop_server.quit()
                         mensaje += 'Fecha y hora : ' + datetime.now().isoformat() + ' >> Cerrando conexión ' + str('\n')
 
-            # if server:
-            #     if not server.logs:
-            #         server.logs = ''
-            # server.logs = mensaje
+            if server:
+                if not server.logs:
+                    server.logs = ''
+            server.logs = mensaje
             server.write({'date': fields.Datetime.now()})
         return True
 

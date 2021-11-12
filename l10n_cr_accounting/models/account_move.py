@@ -71,8 +71,11 @@ class AccountInvoice(models.Model):
         return [("id", "in", self.env.user.company_id.activity_ids.ids)]
 
     def _default_activity_id(self):
-        if self.company_id.def_activity_id:
-            return self.company_id.def_activity_id
+        company_id = self.company_id
+        if not company_id:
+            company_id = self.env.user.company_id
+        if company_id.def_activity_id:
+            return company_id.def_activity_id
         else:
             return False
 
