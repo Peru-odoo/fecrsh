@@ -1,6 +1,6 @@
 {
     "name": "FECR",
-    "version": "14.0.7.11",
+    "version": "14.0.7.12",
     "category": "Accounting",
     "summary": "Factura electrónica para Costa Rica",
     "author": "XALACHI",
@@ -23,6 +23,7 @@
     "data": [
         # security
         "security/ir.model.access.csv",
+        "security/groups.xml",
         #"security/rule.xml",
         # templates
         # data

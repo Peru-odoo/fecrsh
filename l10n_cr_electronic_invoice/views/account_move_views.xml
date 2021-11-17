@@ -192,6 +192,17 @@
                 </div>
             </xpath>
 
+
+             <!--Nuevo 17-11-2021-->
+             <xpath expr="//field[@name='invoice_line_ids']" position="before">
+                <div>
+                    <button name="action_quit_lines" string="Quitar líneas" type="object" class="btn-secondary float-right text-danger"
+                            icon="fa-trash-o" groups="l10n_cr_electronic_invoice.group_show_delete_lines_invoice"
+                            confirm="Esta seguro de quitar todas las líneas?."
+                            attrs="{'invisible': [('state','not in',('draft'))]}"/>
+                </div>
+            </xpath>
+
         </field>
     </record>
 

@@ -268,6 +268,19 @@ class AccountInvoice(models.Model):
 
         return new_vals_list
 
+        # Nuevo 17-11-2021
+
+    def action_quit_lines(self):
+        for record in self:
+            if record.invoice_line_ids:
+                for line in record.invoice_line_ids:
+                    record.write({'invoice_line_ids': [(3, line.id)]})
+
+            if record.amount_tax_electronic_invoice:
+                record.amount_tax_electronic_invoice = 0.0
+            if record.amount_total_electronic_invoice:
+                record.amount_total_electronic_invoice = 0.0
+
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
