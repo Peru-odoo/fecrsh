@@ -276,10 +276,10 @@ class AccountInvoice(models.Model):
                 for line in record.invoice_line_ids:
                     record.write({'invoice_line_ids': [(3, line.id)]})
 
-            if record.amount_tax_electronic_invoice:
-                record.amount_tax_electronic_invoice = 0.0
-            if record.amount_total_electronic_invoice:
-                record.amount_total_electronic_invoice = 0.0
+            # if record.amount_tax_electronic_invoice:
+            #     record.amount_tax_electronic_invoice = 0.0
+            # if record.amount_total_electronic_invoice:
+            #     record.amount_total_electronic_invoice = 0.0
 
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
