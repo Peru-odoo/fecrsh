@@ -29,7 +29,7 @@
                     </div>
                 </xpath>
                  <xpath expr="//field[@name='expense_line_ids']" position="attributes">
-                   <attribute name="domain">[('invoice_id','=',False)]</attribute>
+                   <attribute name="domain">[('state', '=', 'draft'), ('employee_id', '=', employee_id), ('company_id', '=', company_id),('invoice_id','=',False)]</attribute>
                 </xpath>
                 <xpath expr="//field[@name='expense_line_ids']" position="after">
                     <div>

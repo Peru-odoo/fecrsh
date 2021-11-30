@@ -14,7 +14,7 @@
     'maintainer': 'Jhonny M. / Odoomatic',
     'website': "https://www.odoomatic.com",
     'category': 'Human Resources/Expenses',
-    'version': '14.0.0.1',
+    'version': '14.0.0.2',
     'depends': ["base", "hr_expense","account","l10n_cr_electronic_invoice"],
     'data': [
        'views/account_move_views.xml',
