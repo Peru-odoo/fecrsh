@@ -14,6 +14,10 @@ class AccountMoveReversal(models.TransientModel):
             self.reason = self.reference_code_id.name
 
     def _prepare_default_reversal(self, move):
+
+        if not self.journal_id:
+            raise UserError(_("Seleccione un diario por favor. De preferencia Diario de Clientes."))
+
         reverse_date = self.date if self.date_mode == 'custom' else move.date
         return {
             'ref': _('Rectificativa de: %(move_name)s, %(reason)s', move_name=move.name, reason=self.reason)
