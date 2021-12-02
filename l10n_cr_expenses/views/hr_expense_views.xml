@@ -40,8 +40,7 @@
                         El campo <strong><span style="color:#0a2233">Total Moneda</span></strong> está expresada en la moneda de la compañia,
                         el símbolo negativo refiere que es un monto de gasto, sin embargo, para los gastos indica una sumatoria.
                     </div>
-                    <field name="invoice_supplier_ids" widget="many2many" mode="tree,kanban" domain="[('expense_id', '=', False),
-                                                                                                     ('state', '=', 'posted'),
+                    <field name="invoice_supplier_ids" widget="many2many" mode="tree,kanban" domain="[('state', '=', 'posted'),
                                                                                                      ('payment_state', '!=', 'paid'),
                                                                                                      ('move_type','=','in_invoice'),
                                                                                                      ('expense_sheet_id','=',False)]">
