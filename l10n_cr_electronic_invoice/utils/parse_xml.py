@@ -189,9 +189,9 @@ def data_xml(self, att, invoice_import_ids):
         invoice_line_ids = False
         if line_type != 'line_no_create': #Para el caso de que no desee crear líneas en las facturas.
             invoice_line_ids = data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
-        if line_type == 'line_no_create':
-            amount_tax_electronic_invoice = 0.0
-            amount_total_electronic_invoice = 0.0
+        # if line_type == 'line_no_create':
+        #     amount_tax_electronic_invoice = 0.0
+        #     amount_total_electronic_invoice = 0.0
 
         if r:
             values = {
