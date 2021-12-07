@@ -26,7 +26,7 @@ def parseXml(self, values, attachments, invoice_import_ids):
     return vals
 
 
-def data_xml(self, att, invoice_import_ids):
+def email_xml_to_invoice(self, att, invoice_import_ids):
     content = att.content
     if isinstance(content, str):
         content = content.encode('utf-8')
@@ -44,9 +44,27 @@ def data_xml(self, att, invoice_import_ids):
         _logger.error("MAB - This XML file is not XML-compliant. Exception {}".format(e))
         return {"status": 400, "text": "Excepción de conversión de XML"}
 
-    # pretty_xml_string = etree.tostring(factura, pretty_print=True, encoding="UTF-8", xml_declaration=True)
-    # _logger.info("Send_file XML: {}".format(pretty_xml_string))
+    fname = att.fname
+    return data_xml(self, root, factura, invoice_import_ids, fname, xml_code)
 
+
+def upload_xml_to_invoice(self, attachment, invoice_import_ids):
+    xml_code = attachment
+    xml_string = re.sub(' xmlns="[^"]+"', "", base64.b64decode(xml_code).decode("utf-8"), count=1, ).encode("utf-8")
+    root = ET.fromstring(xml_string, parser=etree.XMLParser(encoding='utf-8', remove_blank_text=True))
+    xml_decoded = base64.b64decode(xml_code)
+    try:
+        factura = etree.fromstring(xml_decoded)
+
+    except Exception as e:
+        _logger.error("MAB - This XML file is not XML-compliant. Exception {}".format(e))
+        return {"status": 400, "text": "Excepción de conversión de XML"}
+
+    fname = self.fname_xml_supplier_approval
+    return data_xml(self, root, factura, invoice_import_ids, fname, xml_code)
+
+
+def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
     if root.tag in ('FacturaElectronica', 'NotaCreditoElectronica', 'NotaDebitoElectronica'):
 
         dict_type_document = MOVE_INVOICE[root.tag]
@@ -188,7 +206,7 @@ def data_xml(self, att, invoice_import_ids):
 
         invoice_line_ids = False
         if line_type != 'line_no_create': #Para el caso de que no desee crear líneas en las facturas.
-            invoice_line_ids = data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
+            invoice_line_ids = data_line(self, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
         # if line_type == 'line_no_create':
         #     amount_tax_electronic_invoice = 0.0
         #     amount_total_electronic_invoice = 0.0
@@ -216,7 +234,7 @@ def data_xml(self, att, invoice_import_ids):
                 'invoice_line_ids': invoice_line_ids,
                 'company_id': company.id,
                 'from_mail': True,
-                'fname_xml_supplier_approval': att.fname,
+                'fname_xml_supplier_approval': fname,
                 'xml_supplier_approval': xml_code,
                 #'invoice_payment_term_id': invoice_payment_term_id,
 
@@ -230,7 +248,7 @@ def data_xml(self, att, invoice_import_ids):
         return {}
 
 
-def data_line(self, att, lines, account, tax_ids, line_type, product_product_id, company, analytic_id):
+def data_line(self, lines, account, tax_ids, line_type, product_product_id, company, analytic_id):
     """Preparando lineas de factura"""
 
     array_lines = []

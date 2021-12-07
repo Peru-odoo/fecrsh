@@ -1145,3 +1145,31 @@ class AccountInvoice(models.Model):
                     (line + counterpart_lines).with_context(move_reverse_cancel=cancel).reconcile()
 
         return reverse_moves
+
+        # Nuevo 07-12-21
+
+    def upload_xml_supplier(self):
+        values = {"name": "/",  # we have to give the name otherwise it will be set to the mail's subject
+                  }
+        # TODO CÓDIGO AGREGADO
+        invoice_import_ids = self.env['account.move.import.config'].sudo().search([('company_id', '=', self.company_id.id), ('active', '=', True)], limit=1)
+        module_import_bills = bool(self.env["ir.config_parameter"].sudo().get_param("module_import_bills"))
+        if module_import_bills:
+
+            values['journal_id'] = invoice_import_ids.journal_id.id
+            logging.info("-------- Parseando xml a factura --------")
+            if self.xml_supplier_approval:
+                if self.fname_xml_supplier_approval[-3:] == "xml":
+                    vals = utils.parse_xml.upload_xml_to_invoice(self, self.xml_supplier_approval, invoice_import_ids)
+                    values.update(vals)
+                    values['tipo_documento'] = 'CCE'
+                    self.write(values)
+                    self.env['ir.attachment'].sudo().create({
+                        'name': self.fname_xml_supplier_approval,
+                        'datas': base64.b64encode(self.xml_supplier_approval),
+                        'res_model': 'account.move',
+                        'res_id': self.id,
+                    })
+                else:
+                    raise ValidationError(_("Debe ser un archivo con extensión .xml "))
+

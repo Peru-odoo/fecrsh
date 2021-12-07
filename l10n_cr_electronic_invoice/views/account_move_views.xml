@@ -63,7 +63,7 @@
             </field>
             <xpath expr="//field[@name='tipo_documento']" position="replace"/>
             <xpath expr="//field[@name='ref']" position="after">
-                <field name="tipo_documento" />
+                <field name="tipo_documento"/>
                 <field name="state_invoice_partner" attrs="{'invisible':['|',('tipo_documento','=', 'FEC'),('move_type','!=','in_invoice')],
                 'required': [('from_mail','=',True)]}" string="Aceptación"/>
             </xpath>
@@ -83,7 +83,15 @@
 
                         <!--para proveedores-->
                         <field name="fname_xml_supplier_approval" invisible="1"/>
-                        <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" />
+                        <label for="xml_supplier_approval" string="Comprobante XML"/>
+                        <div id="div_xml_supplier_approval">
+                            <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" string="Comprobante XML" class="mb-0 oe_inline"/>
+                            <button name="upload_xml_supplier" string="Cargar datos de XML" type="object" icon="fa-arrow-right"
+                                    class="btn btn-link pt-0"
+                                    attrs="{'invisible': [('xml_supplier_approval','=',False)]}"
+                            />
+                        </div>
+                        <!--                        <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" />-->
                         <field name="date_issuance" attrs="{'invisible':[('move_type','!=','in_invoice')]}" string="Fecha emisión"/>
                         <field name="from_mail" string="Proviene de email?"/>
 
@@ -159,7 +167,7 @@
                 </div>
 
                 <div attrs="{'invisible': [('move_type','not in',('in_invoice','in_refund'))]}">
-                     <div class="alert alert-success text-center o_form_header"
+                    <div class="alert alert-success text-center o_form_header"
                          attrs="{'invisible': [('state_send_invoice', '!=', 'aceptado')]}" role="status">
                         <a class="close" data-dismiss="alert" href="#" aria-label="Close">x</a>
                         <h4>
@@ -193,8 +201,8 @@
             </xpath>
 
 
-             <!--Nuevo 17-11-2021-->
-             <xpath expr="//field[@name='invoice_line_ids']" position="before">
+            <!--Nuevo 17-11-2021-->
+            <xpath expr="//field[@name='invoice_line_ids']" position="before">
                 <div>
                     <button name="action_quit_lines" string="Quitar líneas" type="object" class="btn-secondary float-right text-danger"
                             icon="fa-trash-o" groups="l10n_cr_electronic_invoice.group_show_delete_lines_invoice"
