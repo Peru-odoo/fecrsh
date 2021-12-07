@@ -17,9 +17,9 @@
                         <t t-if="receipt.client.identification_id">
                             <t t-esc='receipt.client.identification_id[1]'/>
                         </t>
-                        <t t-elif="receipt.client.p2p_document_type">
+                        <!--<t t-elif="receipt.client.p2p_document_type">
                             <t t-esc='receipt.client.p2p_document_type[1]'/>
-                        </t>
+                        </t>-->
                         <t t-else="">
                             Documento
                         </t>
