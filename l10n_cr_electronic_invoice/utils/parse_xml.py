@@ -21,7 +21,7 @@ def parseXml(self, values, attachments, invoice_import_ids):
     vals = {}
     for att in attachments:
         if att and att.fname[-3:] == "xml":
-            rs = data_xml(self, att, invoice_import_ids)
+            rs = email_xml_to_invoice(self, att, invoice_import_ids)
             vals.update(rs)
     return vals
 
