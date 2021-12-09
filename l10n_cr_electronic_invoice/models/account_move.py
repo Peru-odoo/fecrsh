@@ -881,7 +881,8 @@ class AccountInvoice(models.Model):
                     doc_type=res[1],
                     sequence=res[0].next_by_id(),
                 )
-            if not(self.state_invoice_partner and self.move_type in ('in_invoice') and self.from_mail):
+            if not(self.move_type in ('in_invoice','in_refund') and self.from_mail and self.state_send_invoice) and not self.number_electronic:
+                #not(not self.state_send_invoice and self.move_type in ('in_invoice') and self.from_mail and self.number_electronic):
                 invoice.number_electronic = cr_edi.utils.get_number_electronic(
                     issuer=invoice.company_id,
                     full_sequence=invoice.electronic_sequence,

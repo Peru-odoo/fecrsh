@@ -12,9 +12,12 @@
                 <field name="is_expired" invisible="1"/>
             </xpath>
             <xpath expr="//button[@name='action_post'][2]" position="attributes">
-                <attribute name="attrs">
-                    {'invisible': ['|','|','|','|','|',('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type','=','entry'),('is_expired','=', True),
-                    ('xml_comprobante','!=',False),'&amp;',('electronic_sequence','!=',False),('move_type','=','out_invoice')]}
+               <!-- <attribute name="attrs">
+                    {'invisible': ['|','|','|','|','|',('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type','=','entry'),
+                    ('is_expired','=', True),('xml_comprobante','!=',False),'&amp;',('electronic_sequence','!=',False),('move_type','=','out_invoice')]}
+                </attribute>-->
+                 <attribute name="attrs">
+                    {'invisible': ['|','|','|',('state', '!=', 'draft'), ('auto_post', '=', True), ('move_type','=','entry'),('is_expired','=', True)]}
                 </attribute>
             </xpath>
 
