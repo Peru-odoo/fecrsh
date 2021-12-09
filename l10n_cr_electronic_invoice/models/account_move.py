@@ -279,9 +279,12 @@ class AccountInvoice(models.Model):
                 js_dict = json.loads(l.info_json)
                 codigo = js_dict['codigo']
                 unidad_medida = js_dict['unidad_medida']
-            else:
+            elif l.product_id:
                 codigo = l.product_id.cabys_id.code
                 unidad_medida = l.product_id.uom_id.code
+            else:
+                codigo = False
+                unidad_medida = False
 
             if l.product_id.type == 'service' and l.product_id.uom_id.category_id.name != 'Services':
                 raise UserError(_("Para generar el xml es necesario que el producto:  {}  de tipo servicio, tenga una categoría en la unidad de medida "
@@ -361,9 +364,9 @@ class AccountInvoice(models.Model):
         """
         self.ensure_one()
 
-        if self.xml_supplier_approval:
+        if self.xml_supplier_approval and self.from_mail:
             response_json = cr_edi.api.query_document(
-                clave="{}-{}".format(self.number_electronic, self.consecutive_number_receiver, ),
+                clave="{}-{}".format(self.number_electronic, self.consecutive_number_receiver),
                 token=self.company_id.get_token(),
                 client_id=self.company_id.frm_ws_ambiente,
             )
