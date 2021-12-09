@@ -21,7 +21,7 @@
             <Provincia>{{issuer.state_id.code or ""}}</Provincia>
             <Canton>{{issuer.county_id.code or ""}}</Canton>
             <Distrito>{{issuer.district_id.code or ""}}</Distrito>
-            {% if issuer.neighborhood_id.code %}
+            {% if issuer.neighborhood_id %}
             <Barrio>{{issuer.neighborhood_id.code}}</Barrio>
             {% endif %}
             {% if issuer.street %}
@@ -45,8 +45,8 @@
             <Provincia>{{receiver.state_id.code or ""}}</Provincia>
             <Canton>{{receiver.county_id.code or ""}}</Canton>
             <Distrito>{{receiver.district_id.code or ""}}</Distrito>
-            {#<Barrio>{{receiver.neighborhood_id.code or ""}}</Barrio>#}
-            <OtrasSenas>{{receiver.street or ""}}</OtrasSenas>
+            <Barrio>{{receiver.neighborhood_id.code}}</Barrio>
+            <OtrasSenas>{{receiver.street or "NA"}}</OtrasSenas>
         </Ubicacion>
         {% endif %}
         <Telefono>
