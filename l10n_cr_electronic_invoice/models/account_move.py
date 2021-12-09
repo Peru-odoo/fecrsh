@@ -275,7 +275,7 @@ class AccountInvoice(models.Model):
             monto_descuento = round(monto_total * (l.discount/100), digits)
             sub_total = round(monto_total - monto_descuento,digits)
             impuestos, total_tax = compute_tax_total(l, sub_total)
-            if not l.product_id and l.move_id.move_type in ('in_invoice', 'in_refund'):
+            if not l.product_id and l.move_id.move_type in ('in_invoice', 'in_refund') and l.info_json:
                 js_dict = json.loads(l.info_json)
                 codigo = js_dict['codigo']
                 unidad_medida = js_dict['unidad_medida']
