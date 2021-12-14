@@ -12,7 +12,7 @@
     'maintainer': 'Jhonny M. / BigCloud',
     'website': "https://www.bigcloud.com",
     'category': 'POS / Envío-electrónico',
-    'version': '14.0.3.7',
+    'version': '14.0.3.8',
     'depends': ["l10n_cr_electronic_invoice", "point_of_sale",],
     'data': [
         #'security/ir.model.access.csv',
@@ -27,7 +27,10 @@
         'views/pos_payment_method_views.xml',
 
     ],
-    'qweb': ['static/src/xml/OrderReceipt.xml','static/src/xml/ClientDetailsEdit.xml'],
+    'qweb': ['static/src/xml/OrderReceipt.xml',
+             'static/src/xml/ClientDetailsEdit.xml',
+             'static/src/xml/PaymentScreen.xml',
+             ],
     'license': 'AGPL-3',
     'installable': True,
     'application': True,
