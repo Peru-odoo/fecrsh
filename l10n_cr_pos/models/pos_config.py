@@ -18,6 +18,7 @@ class PosConfig(models.Model):
                                      string=u"Secuencia Notas de Crédito Electrónica", required=False, copy=False)
     sequence_te_id = fields.Many2one(comodel_name="ir.sequence", string=u"Secuencia Tiquete Electrónico",
                                      required=False, copy=False)
+    show_send_hacienda = fields.Boolean()
 
     # _sql_constraints = [
     #     ('sucursal_company_uniq', 'unique (sucursal, terminal, company_id)',

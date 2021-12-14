@@ -26,15 +26,16 @@
                     <div class="col-12 col-lg-8 o_setting_box">
                         <div class="o_setting_right_pane">
                             <div class="alert alert-info" role="alert" style="margin-bottom:0px;"
-                                     attrs="{'invisible': ['&amp;','&amp;',
+                                 attrs="{'invisible': ['&amp;','&amp;',
                                                         ('sequence_fe_id','!=',False),
                                                         ('sequence_nc_id','!=',False),
                                                         ('sequence_te_id','!=',False),
                                                         ]}">
-                                     <span class="fa fa-info-circle"/> NOTA:Las secuencias se generarán acorde a la sucursal.
+                                <span class="fa fa-info-circle"/>
+                                NOTA:Las secuencias se generarán acorde a la sucursal.
                             </div>
                             <header>
-                                <button name="create_sequences"  string="Generar secuencias" class="btn btn-sm btn-primary text-white"
+                                <button name="create_sequences" string="Generar secuencias" class="btn btn-sm btn-primary text-white"
                                         icon="fa-list-ol"
                                         type="object" attrs="{'invisible': ['&amp;','&amp;',
                                                         ('sequence_fe_id','!=',False),
@@ -59,6 +60,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12 col-lg-6 o_setting_box" id="electronic_invoice_show_hacienda">
+                        <div class="o_setting_left_pane">
+                            <field name="show_send_hacienda"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="show_send_hacienda" string="Enviar comprobante a Hacienda"/>
+                            <div class="text-muted">
+                                Mostrar opción en PUNTO DE VENTA para envío del comprobante a Hacienda.
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </xpath>
         </field>

@@ -37,6 +37,7 @@ class PosOrder(models.Model):
     _inherit = "pos.order", "mail.thread"
 
     is_return = fields.Boolean(string='Retorno')
+    envio_hacienda = fields.Boolean(string='Envio a Hacienda', default=True)
 
     @api.model
     def sequence_number_sync(self, vals):
@@ -70,41 +71,51 @@ class PosOrder(models.Model):
     @api.model
     def _order_fields(self, ui_order):
         vals = super(PosOrder, self)._order_fields(ui_order)
-        vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
-        vals["sequence"] = ui_order.get("sequence")
-        vals["number_electronic"] = ui_order.get("number_electronic")
-        # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO PERTENECE A ESTE MÓDULO
-        if 'return_order_ref' in ui_order:
-            if ui_order.get('return_order_ref') != False:
-                vals['pos_order_id'] = int(ui_order['return_order_ref'])
+        session = self.env['pos.session'].sudo().browse(ui_order.get('session_id'))
+        vals['envio_hacienda'] = ui_order.get('envio_hacienda')
+        if ui_order.get('envio_hacienda') or not session.config_id.show_send_hacienda:
+            vals['envio_hacienda'] = True
+            vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
+            vals["sequence"] = ui_order.get("sequence")
+            vals["number_electronic"] = ui_order.get("number_electronic")
+            # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO PERTENECE A ESTE MÓDULO
+            if 'return_order_ref' in ui_order:
+                if ui_order.get('return_order_ref') != False:
+                    vals['pos_order_id'] = int(ui_order['return_order_ref'])
+        else:
+            vals['envio_hacienda'] = False
         return vals
 
     @api.model
     def create(self, vals):
         session = self.env['pos.session'].sudo().browse(vals['session_id'])
         vals = self._complete_values_from_session(session, vals)
-
-        if vals["tipo_documento"]=='FE':
-            seq = session.config_id.sequence_fe_id.next_by_id()
-        elif vals["tipo_documento"]=='TE':
-            seq = session.config_id.sequence_te_id.next_by_id()
-        elif vals["tipo_documento"] == 'NC':
-            seq = session.config_id.sequence_te_id.next_by_id()
-        else:
-            raise UserError(
-                _(
-                    "No se generó el tipo de documento"
+        vals['envio_hacienda'] = ui_order.get('envio_hacienda')
+        if vals["envio_hacienda"] or not session.config_id.show_send_hacienda:
+            vals['envio_hacienda'] = True
+            if vals["tipo_documento"]=='FE':
+                seq = session.config_id.sequence_fe_id.next_by_id()
+            elif vals["tipo_documento"]=='TE':
+                seq = session.config_id.sequence_te_id.next_by_id()
+            elif vals["tipo_documento"] == 'NC':
+                seq = session.config_id.sequence_te_id.next_by_id()
+            else:
+                raise UserError(
+                    _(
+                        "No se generó el tipo de documento"
+                    )
                 )
+            sequence = cr_edi.utils.compute_full_sequence(
+                session.config_id.sucursal,
+                session.config_id.terminal,
+                vals["tipo_documento"],
+                seq
             )
-        sequence = cr_edi.utils.compute_full_sequence(
-            session.config_id.sucursal,
-            session.config_id.terminal,
-            vals["tipo_documento"],
-            seq
-        )
-        vals["sequence"] = sequence
-        number = cr_edi.utils.get_number_electronic(self.env.company, sequence)
-        vals["number_electronic"] = number
+            vals["sequence"] = sequence
+            number = cr_edi.utils.get_number_electronic(self.env.company, sequence)
+            vals["number_electronic"] = number
+        else:
+            vals['envio_hacienda'] = False
         return super().create(vals)
         #return order
 
@@ -420,7 +431,7 @@ class PosOrder(models.Model):
     def send_hacienda(self,max_orders, no_partner):
         pos_orders = self.env["pos.order"].search([
             ("state", "in", ("paid", "done", "invoiced")), "|", (no_partner, "=", True),
-            ("partner_id", "!=", False), ("state_tributacion", "=", False), ],
+            ("partner_id", "!=", False), ("state_tributacion", "=", False),('envio_hacienda','=',True)  ],
             order="date_order desc",
             limit=max_orders,
         )
