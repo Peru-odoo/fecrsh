@@ -37,7 +37,7 @@ class PosOrder(models.Model):
     _inherit = "pos.order", "mail.thread"
 
     is_return = fields.Boolean(string='Retorno')
-    envio_hacienda = fields.Boolean(string='Envio a Hacienda', default=True)
+    envio_hacienda = fields.Boolean(string='Envio a Hacienda')
 
     @api.model
     def sequence_number_sync(self, vals):
@@ -90,7 +90,6 @@ class PosOrder(models.Model):
     def create(self, vals):
         session = self.env['pos.session'].sudo().browse(vals['session_id'])
         vals = self._complete_values_from_session(session, vals)
-        vals['envio_hacienda'] = ui_order.get('envio_hacienda')
         if vals["envio_hacienda"] or not session.config_id.show_send_hacienda and session:
             vals['envio_hacienda'] = True
             if vals["tipo_documento"]=='FE':
