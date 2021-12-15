@@ -71,9 +71,9 @@ class PosOrder(models.Model):
     @api.model
     def _order_fields(self, ui_order):
         vals = super(PosOrder, self)._order_fields(ui_order)
-        session = self.env['pos.session'].sudo().browse(ui_order.get('session_id'))
+        session = self.env['pos.session'].sudo().browse(vals.get('session_id'))
         vals['envio_hacienda'] = ui_order.get('envio_hacienda')
-        if ui_order.get('envio_hacienda') or not session.config_id.show_send_hacienda:
+        if ui_order.get('envio_hacienda') or not session.config_id.show_send_hacienda and session:
             vals['envio_hacienda'] = True
             vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
             vals["sequence"] = ui_order.get("sequence")
@@ -90,7 +90,8 @@ class PosOrder(models.Model):
     def create(self, vals):
         session = self.env['pos.session'].sudo().browse(vals['session_id'])
         vals = self._complete_values_from_session(session, vals)
-        if vals["envio_hacienda"] or not session.config_id.show_send_hacienda:
+        vals['envio_hacienda'] = ui_order.get('envio_hacienda')
+        if vals["envio_hacienda"] or not session.config_id.show_send_hacienda and session:
             vals['envio_hacienda'] = True
             if vals["tipo_documento"]=='FE':
                 seq = session.config_id.sequence_fe_id.next_by_id()

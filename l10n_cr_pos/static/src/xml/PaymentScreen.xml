@@ -8,7 +8,7 @@
                       	<div class="top-content-center" style="text-align: -webkit-center;">
                         <h2>
                             <span style="width: 50%;"/>
-                                <span style="width: 50%;">
+                            <span style="width: 50%;">
                                 <label class="content-customized" style="width: 25%;color: lightseagreen;">Enviar a Hacienda
                                   <input type="checkbox" id="check_sent_hacienda" t-on-click="trigger('envio-hacienda')"/>
                                     <span class="checkmark" style="background: #255688;"/>
