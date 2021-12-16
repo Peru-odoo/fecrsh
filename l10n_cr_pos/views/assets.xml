@@ -5,11 +5,13 @@
 
               <!--Adds-->
             <link rel="stylesheet" href="/l10n_cr_pos/static/src/css/styles.css"/>
+            <link rel="stylesheet" href="/l10n_cr_pos/static/src/css/table.css"/>
 
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/pos.js"/>
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/PaymentScreen.js"/>
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/ClientDetailsEdit.js"/>
             <script type="text/javascript" src="/l10n_cr_pos/static/src/js/client.js"/>
+            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/product_discount_service.js"/>
 <!--            <script type="text/javascript" src="/l10n_cr_pos/static/src/js/models3.js"/>-->
         </xpath>
     </template>

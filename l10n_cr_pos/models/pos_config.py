@@ -20,6 +20,9 @@ class PosConfig(models.Model):
                                      required=False, copy=False)
     show_send_hacienda = fields.Boolean()
 
+    show_remove_tax = fields.Boolean()  # Quitar 10% de servicio
+    remove_tax_amount = fields.Many2one('account.tax', domain=[('type_tax_use', '=', 'sale')])
+
     # _sql_constraints = [
     #     ('sucursal_company_uniq', 'unique (sucursal, terminal, company_id)',
     #      u'La sucursal debe ser única por compañia!'),
