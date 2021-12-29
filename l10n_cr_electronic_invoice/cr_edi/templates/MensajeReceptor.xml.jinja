@@ -14,7 +14,12 @@
     {% if activity_code %}
     <CodigoActividad>{{activity_code}}</CodigoActividad>
     {% endif %}
+    {% if amount_tax_to_be_credited %}
     <CondicionImpuesto>{{tax_status}}</CondicionImpuesto>
+    {% else %}
+    <CondicionImpuesto>04</CondicionImpuesto>
+    {% endif %}
+
     {% if amount_tax_to_be_credited %}
     <MontoTotalImpuestoAcreditar>{{amount_tax_to_be_credited}}</MontoTotalImpuestoAcreditar>
     {% endif %}

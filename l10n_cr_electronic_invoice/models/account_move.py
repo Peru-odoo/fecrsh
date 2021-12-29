@@ -767,7 +767,9 @@ class AccountInvoice(models.Model):
     def _send_invoice_to_hacienda(self):
         """Generate XML, send it and procees response from that API call."""
         for invoice in self:
-            if not invoice.xml_comprobante:
+            #if not invoice.xml_comprobante:
+            if not invoice.xml_comprobante or (not invoice.state_send_invoice and invoice.move_type in ('in_invoice', 'in_refund')) or \
+                (not invoice.state_tributacion and invoice.move_type in ('out_invoice', 'out_refund')):
                 invoice._create_xml_comprobante()
             response_json = invoice._send_xml()
 
