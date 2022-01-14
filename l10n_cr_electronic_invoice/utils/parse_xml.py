@@ -324,6 +324,7 @@ def data_line(self, lines, account, tax_ids, line_type, product_product_id, comp
             if not product_find:
                 dict_p = {'name': detalle,
                           'purchase_ok': True,
+                          'sale_ok': False,
                           'cabys_id': cabys.id if cabys else False,
                           'supplier_taxes_id': False
                           }
