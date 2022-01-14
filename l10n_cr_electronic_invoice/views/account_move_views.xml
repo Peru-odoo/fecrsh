@@ -256,12 +256,12 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">
+             <xpath expr="//field[@name='company_id']" position="after">
+                <field name="currency_id"/>
+            </xpath>
             <xpath expr="//field[@name='currency_id']" position="attributes">
                 <attribute name="invisible">0</attribute>
                 <attribute name="optional">show</attribute>
-            </xpath>
-            <xpath expr="//field[@name='company_id']" position="after">
-                <field name="currency_id"/>
             </xpath>
         </field>
     </record>
