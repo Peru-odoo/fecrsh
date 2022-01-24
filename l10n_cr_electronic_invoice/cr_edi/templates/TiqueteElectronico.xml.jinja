@@ -56,14 +56,6 @@
                 <CodigoTarifa>{{tax.iva_tax_code}}</CodigoTarifa>
                 <Tarifa>{{tax.amount}}</Tarifa>
                 <Monto>{{(line.price_subtotal * (tax.amount / 100))|round(5)}}</Monto>
-                {# <Exoneracion>
-                    <TipoDocumento>{{receiver.type_exoneration.code}}</TipoDocumento>
-                    <NumeroDocumento>{{receiver.exoneration_number}}</NumeroDocumento>
-                    <NombreInstitucion>{{receiver.institution_name}}</NombreInstitucion>
-                    <FechaEmision>{{receiver.date_issue}}</FechaEmision>
-                    <PorcentajeExoneracion>{{tax. exoneracion]["porcentajeCompra"]}}</PorcentajeExoneracion>
-                    <MontoExoneracion>{{tax. exoneracion]["montoImpuesto"]}}</MontoExoneracion>
-                </Exoneracion> #}
             </Impuesto>
             {% endfor %}
             <ImpuestoNeto>{{(line.price_subtotal_incl - line.price_subtotal)|round(5)}}</ImpuestoNeto>

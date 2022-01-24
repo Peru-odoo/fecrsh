@@ -7,7 +7,7 @@ odoo.define('l10n_cr_pos.ClientDetailsEdit', function(require) {
     const LoyaltyClientDetailsEdit = ClientDetailsEdit => class extends ClientDetailsEdit {
         constructor() {
             super(...arguments);
-            this.intFields = ['country_id', 'state_id', 'property_product_pricelist'];
+            this.intFields = ['identification_id', 'country_id', 'state_id','county_id','district_id','neighborhood_id','property_product_pricelist'];
             this.changes = {};
          }
         captureChange(event) {
@@ -30,6 +30,43 @@ odoo.define('l10n_cr_pos.ClientDetailsEdit', function(require) {
                     }
                 });
             }
+
+            if(event.target.name=='state_id'){
+                 var counties = this.env.pos.list_county;
+                 var counties_html = ""
+                 for(var i=0; i < counties.length; i++){
+                    if(counties[i].state_id[0] == parseInt(event.target.value)){
+                        counties_html+= "<option value="+counties[i].id +" >"+ counties[i].name +"</option>";
+                    }
+                 }
+                 $('select[name="county_id"]').empty();
+                 $('select[name="county_id"]').html(counties_html);
+            }
+
+            if(event.target.name=='county_id'){
+                 var districts = this.env.pos.list_district;
+                 var districts_html = ""
+                 for(var i=0; i < districts.length; i++){
+                    if(districts[i].county_id[0] == parseInt(event.target.value)){
+                        districts_html+= "<option value="+districts[i].id +" >"+ districts[i].name +"</option>";
+                    }
+                 }
+                 $('select[name="district_id"]').empty();
+                 $('select[name="district_id"]').html(districts_html);
+            }
+
+             if(event.target.name=='district_id'){
+                 var neighborhoods = this.env.pos.list_neighborhood;
+                 var neighborhoods_html = ""
+                 for(var i=0; i < neighborhoods.length; i++){
+                    if(neighborhoods[i].district_id[0] == parseInt(event.target.value)){
+                        neighborhoods_html+= "<option value="+neighborhoods[i].id +" >"+ neighborhoods[i].name +"</option>";
+                    }
+                 }
+                 $('select[name="neighborhood_id"]').empty();
+                 $('select[name="neighborhood_id"]').html(neighborhoods_html);
+             }
+
 
 
         }

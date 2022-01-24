@@ -1,8 +1,6 @@
 import re
-
 import requests
-
-from odoo import _, api, models
+from odoo import _, api, models, fields
 from odoo.exceptions import UserError
 
 NIF_API = "https://api.hacienda.go.cr/fe/ae"
@@ -10,6 +8,13 @@ NIF_API = "https://api.hacienda.go.cr/fe/ae"
 
 class Partner(models.Model):
     _inherit = "res.partner"
+
+    property_payment_term_id = fields.Many2one('account.payment.term', company_dependent=False, oldname="property_payment_term_id",
+                                               string='Customer Payment Terms',
+                                               domain="[('company_id', 'in', [current_company_id, False])]",
+                                               help="This payment term will be used instead of the default one for sales orders and customer invoices")
+
+
 
     @api.onchange("vat", "identification_id")
     def _verify_vat_and_identification_id(self):  # TODO in res.company

@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@class='oe_title']" position="replace">
                 <div class="oe_title" id="mp_type">
-                    <label for="payment_method_id" class="oe_edit_only" string="Método de aAgo"/>
+                    <label for="payment_method_id" string="Método de págo"/>
                     <h1>
                         <field name="payment_method_id" class="oe_inline" required="1"/>
                     </h1>

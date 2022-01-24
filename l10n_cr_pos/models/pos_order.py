@@ -73,15 +73,20 @@ class PosOrder(models.Model):
         vals = super(PosOrder, self)._order_fields(ui_order)
         session = self.env['pos.session'].sudo().browse(vals.get('session_id'))
         vals['envio_hacienda'] = ui_order.get('envio_hacienda')
+
+        _logger.info("POS - Enviar a hacienda ? %s " % (vals['envio_hacienda']))
+
         if ui_order.get('envio_hacienda') or not session.config_id.show_send_hacienda and session:
             vals['envio_hacienda'] = True
             vals["tipo_documento"] = self._get_type_documento(ui_order,vals)
             vals["sequence"] = ui_order.get("sequence")
             vals["number_electronic"] = ui_order.get("number_electronic")
-            # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO PERTENECE A ESTE MÓDULO
+            # TODO: EL CAMPO POR_ORDER_ID CUMPLE LA MISMA FUNCIÓN, PERO NOPERTENECE A ESTE MÓDULO
             if 'return_order_ref' in ui_order:
                 if ui_order.get('return_order_ref') != False:
                     vals['pos_order_id'] = int(ui_order['return_order_ref'])
+
+            _logger.info("POS - Tipo de documento %s " % (vals['tipo_documento']))
         else:
             vals['envio_hacienda'] = False
         return vals
@@ -92,18 +97,15 @@ class PosOrder(models.Model):
         vals = self._complete_values_from_session(session, vals)
         if vals["envio_hacienda"] or not session.config_id.show_send_hacienda and session:
             vals['envio_hacienda'] = True
-            if vals["tipo_documento"]=='FE':
+            if vals["tipo_documento"] == 'FE':
                 seq = session.config_id.sequence_fe_id.next_by_id()
-            elif vals["tipo_documento"]=='TE':
+            elif vals["tipo_documento"] == 'TE':
                 seq = session.config_id.sequence_te_id.next_by_id()
             elif vals["tipo_documento"] == 'NC':
                 seq = session.config_id.sequence_te_id.next_by_id()
             else:
-                raise UserError(
-                    _(
-                        "No se generó el tipo de documento"
-                    )
-                )
+                raise UserError(_("No se generó el tipo de documento"))
+
             sequence = cr_edi.utils.compute_full_sequence(
                 session.config_id.sucursal,
                 session.config_id.terminal,
@@ -113,6 +115,8 @@ class PosOrder(models.Model):
             vals["sequence"] = sequence
             number = cr_edi.utils.get_number_electronic(self.env.company, sequence)
             vals["number_electronic"] = number
+            _logger.info('Secuencia en POS: %s' % (sequence))
+            _logger.info('Número electrónico en POS: %s' % (number))
         else:
             vals['envio_hacienda'] = False
         return super().create(vals)
@@ -582,11 +586,6 @@ class PosOrder(models.Model):
                     }
                 doc.date_issuance = date_cr
                 # invoice_comments = ""
-
-
-                """AQUÍ TIENEN QUE IR LAS VALIDACIONES"""
-                self.pos_valitation_einvoice()
-
                 xml_string_builder = cr_edi.gen_xml.gen(doc)
                 #xml_to_sign = str(xml_string_builder)
                 xml_firmado = cr_edi.utils.sign_xml(
@@ -653,11 +652,6 @@ class PosOrder(models.Model):
                     )
         _logger.info("MAB 014 - Valida Hacienda POS- Finalizado Exitosamente")
 
-
-    def pos_valitation_einvoice(self):
-        pass
-
-
     #METODO COPIADO DE l10n_cr_vat_validation PARA TRAER DATOS DEL CLIENTE
     @api.model
     def _get_name_from_vat(self,vat):
@@ -682,3 +676,13 @@ class PosOrder(models.Model):
                 "message": message,
             }
         }
+
+    @api.model
+    def _process_order(self, order, draft, existing_order):
+        if existing_order and existing_order.display_name == '/' and 'envio_hacienda' in order['data']:
+            if order['data']['envio_hacienda']:
+                o = self.env['pos.order'].sudo().browse(existing_order.id)
+                o.sudo().lines.unlink()
+                o.sudo().unlink()
+                existing_order = False
+        return super(PosOrder, self)._process_order(order, draft, existing_order)

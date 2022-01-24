@@ -27,7 +27,7 @@
         "views/account_payment_term.xml",
         "views/account_payment_views.xml",
         "views/account_tax_views.xml",
-        "views/account_tax.xml",
+        #"views/account_tax.xml",
         "views/code_type_product_views.xml",
         "views/product_template.xml",
         "views/res_company_views.xml",

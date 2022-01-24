@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from .. import e_bills
 
 TYPES = {
     0 : u'FE-Secuencia de Factura electrónica',
@@ -77,5 +78,6 @@ class PosConfig(models.Model):
         # self.sequence_nc_id = seq.filtered(lambda nc: nc.code.split('.')[3]=='NC').id
         # self.sequence_te_id = seq.filtered(lambda te: te.code.split('.')[3]=='TE').id
 
-
-
+    def open_session_cb(self, check_coa=True):
+        e_bills.utils._validations_einvoice_pos(self)
+        return super(PosConfig, self).open_session_cb(check_coa=True)

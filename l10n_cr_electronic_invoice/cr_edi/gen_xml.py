@@ -210,19 +210,25 @@ def gen_from_template(
     reference=None,
     reference_code=None,
 ):
-    lineas = document._get_lines_xml(lines)
-    amounts = document.get_amounts(lineas)
-    phone_obj_issuer = phonenumbers.parse(
-        issuer.phone, issuer.country_id and issuer.country_id.code
-    )
+
+
+    phone_obj_issuer = phonenumbers.parse(issuer.phone, issuer.country_id and issuer.country_id.code)
     if 'pos_reference' in document:
+        amounts = document.get_amounts()
+        phone_obj_receiver = phonenumbers.parse(
+            receiver.phone,
+            (receiver.country_id or issuer.country_id) and (receiver.country_id.code or issuer.country_id.code)
+        )
+        if not phone_obj_receiver:
+            phone_obj_receiver = None
         render = template.render(
             document=document,
             activity_code=activity_code,
             issuer=issuer,
             receiver=receiver,
-            phone_obj_issuer=None if document.tipo_documento =='TE' else phone_obj_issuer,
-            phone_obj_receiver=None,
+            #phone_obj_issuer= None if document.tipo_documento == 'TE' else phone_obj_issuer,
+            phone_obj_issuer=phone_obj_issuer,
+            phone_obj_receiver=phone_obj_receiver,
             lines=lines,
             amounts=amounts,
             currency_rate=currency_rate,
@@ -231,6 +237,8 @@ def gen_from_template(
             reference_code=reference_code,
         )
     else:
+        lineas = document._get_lines_xml(lines)
+        amounts = document.get_amounts(lineas)
         phone_obj_receiver = phonenumbers.parse(
             receiver.phone,
             (receiver.country_id or issuer.country_id) and (receiver.country_id.code or issuer.country_id.code)

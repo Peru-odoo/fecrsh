@@ -1,4 +1,4 @@
-odoo.define('l10n_cr_pos.pos_extended_partner', function (require) {
+odoo.define('l10n_cr_pos.Client', function (require) {
     "use strict";
 
     var models = require('point_of_sale.models');

@@ -68,3 +68,26 @@
   -ms-transform: rotate(45deg);
   transform: rotate(45deg);
 }
+
+
+/*MODIFICADO DE ORIGINAL*/
+.pos .clientlist-screen .client-detail > .label{
+    color: #087e8a;
+    font-weight: 340;
+    display: inline-block;
+    width: 100px;
+    text-align: left;
+    margin-right: 8px;
+}
+
+.pos .clientlist-screen .client-details-box {
+    position: relative;
+    font-size: 13px;
+}
+
+.pos .clientlist-screen .client-details input.client-name {
+    font-size: 24px;
+    line-height: 24px;
+    margin: 18px 28px;
+    width: 640px;
+}

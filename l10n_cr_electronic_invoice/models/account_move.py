@@ -244,7 +244,7 @@ class AccountInvoice(models.Model):
         digits = self.env.ref('l10n_cr_electronic_invoice.fecr_amount_precision').digits
 
         lines = []
-        i = 0
+
 
         def compute_monto_total(line):
             currency = line.move_id.currency_id
@@ -270,6 +270,7 @@ class AccountInvoice(models.Model):
 
             return tax_list, round(total_impuesto,digits)
 
+        i = 0
         for l in lineas:
             monto_total = compute_monto_total(l)
             monto_descuento = round(monto_total * (l.discount/100), digits)
@@ -289,10 +290,10 @@ class AccountInvoice(models.Model):
             if l.product_id.type == 'service' and l.product_id.uom_id.category_id.name != 'Services':
                 raise UserError(_("Para generar el xml es necesario que el producto:  {}  de tipo servicio, tenga una categoría en la unidad de medida "
                                   "de tipo servicio").format(l.product_id.name))
-
+            i += 1
             line_data = {
                 'line': l,
-                'numero_linea': i + 1,
+                'numero_linea': i,
                 'codigo': codigo,
                 'cantidad': l.quantity,
                 'unidad_medida': unidad_medida,

@@ -13,7 +13,7 @@
     'website': "https://www.bigcloud.com",
     'category': 'POS / Envío-electrónico',
     'version': '14.0.4.3',
-    'depends': ["l10n_cr_electronic_invoice", "point_of_sale",],
+    'depends': ['point_of_sale', 'account', 'l10n_cr_electronic_invoice'],
     'data': [
         #'security/ir.model.access.csv',
         'reports/mail_template_pos.xml',
