@@ -299,7 +299,7 @@ def data_line(self, lines, account, tax_ids, line_type, product_product_id, comp
                             taxes += tax
                             total_tax += tax_amount
                         else:
-                            _logger.error("A tax type in the XML does not exist in the configuration: {}").format(tax_node.find("Codigo").text)
+                            _logger.error("Un tipo de impuesto en el XML no existe en la configuración: %s " % (tax_node.find("Codigo").text) )
 
         # Todo: Evaluamos si creamos o no el producto, dependiendo de la configuración
         tax_supplier_id = False

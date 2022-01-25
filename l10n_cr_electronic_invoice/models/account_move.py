@@ -838,7 +838,9 @@ class AccountInvoice(models.Model):
         #debe jalar la secuencia de la compañia
         branch = 0
         terminal = 0
-        if self.state_invoice_partner and self.move_type in ('in_invoice') and self.from_mail:
+        if self.state_invoice_partner and self.move_type in ('in_invoice', 'in_refund') and self.from_mail:
+            if self.tipo_documento not in ('CCE', 'CPCE', 'RCE'):
+                raise ValidationError(_("El tipo de documento debe ser: Aceptación, Aceptación Parcial o Rechazo"))
             ret = TYPE_TO_SEQUENCE_SUPPLIER[self.state_invoice_partner]
             sequence = ret[0]
             tipo_documento = ret[1]
