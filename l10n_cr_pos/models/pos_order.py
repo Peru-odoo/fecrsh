@@ -39,6 +39,73 @@ class PosOrder(models.Model):
     is_return = fields.Boolean(string='Retorno')
     envio_hacienda = fields.Boolean(string='Envio a Hacienda')
 
+    invoice_amount_text = fields.Char(
+        compute="_compute_invoice_amount_text",
+    )
+    total_services_taxed = fields.Float(
+        compute="_compute_total_amounts",
+    )
+    total_services_exempt = fields.Float(
+        compute="_compute_total_amounts",
+    )
+    total_products_taxed = fields.Float(
+        compute="_compute_total_amounts",
+    )
+    total_products_exempt = fields.Float(
+        compute="_compute_total_amounts",
+    )
+    total_taxed = fields.Float(
+        compute="_compute_total_taxed",
+    )
+    total_exempt = fields.Float(
+        compute="_compute_total_exempt",
+    )
+    total_sale = fields.Float(
+        compute="_compute_total_sale",
+    )
+    total_discount = fields.Float(
+        compute="_compute_total_discount",
+    )
+    total_others = fields.Float(
+        compute="_compute_total_others",
+    )
+
+    @api.depends("amount_total")
+    def _compute_invoice_amount_text(self):
+        for record in self:
+            record.invoice_amount_text = record.currency_id.amount_to_text(record.amount_total)
+
+    @api.depends("lines")
+    def _compute_total_amounts(self):
+        for record in self:
+            record.total_services_taxed = sum(record.lines.filtered(lambda l: l.product_id.type == "service" and l.tax_ids).mapped("price_subtotal"))
+            record.total_services_exempt = sum(record.lines.filtered(lambda l: l.product_id.type == "service" and not l.tax_ids).mapped("price_subtotal"))
+            record.total_products_taxed = sum(record.lines.filtered(lambda l: l.product_id.type != "service" and l.tax_ids).mapped("price_subtotal"))
+            record.total_products_exempt = sum(record.lines.filtered(lambda l: l.product_id.type != "service" and not l.tax_ids).mapped("price_subtotal"))
+
+    @api.depends("total_products_taxed", "total_services_taxed")
+    def _compute_total_taxed(self):
+        for record in self:
+            record.total_taxed = record.total_products_taxed + record.total_services_taxed
+
+    @api.depends("total_products_exempt", "total_services_exempt")
+    def _compute_total_exempt(self):
+        for record in self:
+            record.total_exempt = record.total_products_exempt + record.total_services_exempt
+
+    @api.depends("total_products_taxed", "total_services_taxed")
+    def _compute_total_sale(self):
+        for record in self:
+            record.total_sale = record.total_taxed + record.total_exempt
+
+    def _compute_total_discount(self):
+        for record in self:
+            record.total_discount = sum(record.lines.mapped("discount_amount"))
+
+    def _compute_total_others(self):
+        for record in self:
+            record.total_others = 0  # TODO
+
     @api.model
     def sequence_number_sync(self, vals):
         tipo_documento = vals.get("tipo_documento", False)
@@ -263,7 +330,7 @@ class PosOrder(models.Model):
                         attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
                                                                        ("res_id", "=", doc.id),
                                                                        ("res_field", "=", "xml_comprobante")
-                                                                       ],limit=1,)
+                                                                       ],limit=1)
                         attachment.name = doc.fname_xml_comprobante
 
                         #archivo xml de envio y respuesta del comprobante en odoo
