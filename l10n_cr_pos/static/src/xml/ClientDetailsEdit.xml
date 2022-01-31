@@ -20,8 +20,8 @@
 
                     <div class="client-detail">
                         <span class="label">N° de documento</span>
-                          <input class="detail vat" name="vat" t-on-change="captureChange"
-                                 t-att-value="props.partner.vat || ''"/>
+                        <input class="detail vat" name="vat" t-on-change="captureChange"
+                               t-att-value="props.partner.vat || ''"/>
                     </div>
                     <div class="client-detail" style="display: none">
                         <span class="label">City</span>
@@ -56,7 +56,7 @@
                             </t>
                         </select>
                     </div>
-                     <div class="client-detail">
+                    <div class="client-detail">
                         <span class="label">Cantón</span>
                         <select class="detail client-address-counties needsclick" name="county_id" id="county_id"
                                 t-on-change="captureChange">
@@ -76,11 +76,16 @@
                                 t-on-change="captureChange">
                             <option value="">None</option>
                             <t t-foreach="env.pos.list_district" t-as="district" t-key="district.id">
-                                <option t-if="props.partner.county_id[0] == district.county_id[0]"
-                                        t-att-value="district.id"
-                                        t-att-selected="props.partner.district_id ? ((district.id === props.partner.district_id[0]) ? true : undefined) : undefined">
-                                    <t t-esc="district.name"/>
-                                </option>
+                                <t t-if="props.partner.county_id">
+                                     <option t-if="props.partner.county_id[0] == district.county_id[0]"
+                                             t-att-value="district.id"
+                                             t-att-selected="props.partner.district_id ? ((district.id === props.partner.district_id[0]) ? true : undefined) : undefined">
+                                        <t t-esc="district.name"/>
+                                    </option>
+                                </t>
+                                <t t-else="">
+<!--                                     <option t-att-value="district.id"> <t t-esc="district.name"/></option>-->
+                                </t>
                             </t>
                         </select>
                     </div>
@@ -90,12 +95,17 @@
                                 t-on-change="captureChange">
                             <option value="">None</option>
                             <t t-foreach="env.pos.list_neighborhood" t-as="neighborhood" t-key="neighborhood.id">
-                                <option t-if="props.partner.district_id[0] == neighborhood.district_id[0]"
-                                        t-att-value="neighborhood.id"
-                                        t-att-selected="props.partner.neighborhood_id ? ((neighborhood.id === props.partner.neighborhood_id[0]) ? true : undefined) : undefined">
-                                    <t t-esc="neighborhood.name"/>
-                                </option>
-                            </t>
+                                 <t t-if="props.partner.district_id">
+                                 <option t-if="props.partner.district_id[0] == neighborhood.district_id[0]"
+                                         t-att-value="neighborhood.id"
+                                         t-att-selected="props.partner.neighborhood_id ? ((neighborhood.id === props.partner.neighborhood_id[0]) ? true : undefined) : undefined">
+                                        <t t-esc="neighborhood.name"/>
+                                    </option>
+                                </t>
+                                <t t-else="">
+<!--                                    <option t-att-value="neighborhood.id"> <t t-esc="neighborhood.name"/></option>-->
+                                </t>
+                             </t>
                         </select>
                     </div>
                     <div class="client-detail">
@@ -154,7 +164,7 @@
                             </t>
                         </select>
                     </div>
-                     <div class="client-detail">
+                    <div class="client-detail">
                         <span class="label">Plazo de pago</span>
                         <select class="detail client-address-payment_term needsclick" name="property_payment_term_id"
                                 t-on-change="captureChange">
@@ -167,7 +177,7 @@
                             </t>
                         </select>
                     </div>
-                     <div class="client-detail">
+                    <div class="client-detail">
                         <span class="label">Término de pago</span>
                         <select class="detail client-address-payment_methods needsclick" name="payment_methods_id"
                                 t-on-change="captureChange">
