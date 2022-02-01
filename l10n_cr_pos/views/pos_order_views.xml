@@ -34,7 +34,7 @@
                       </div>
                       <group style="width: 65%">
                           <field name="fname_xml_comprobante" invisible="1" readonly="1"/>
-                          <field name="xml_comprobante" filename="fname_xml_comprobante" readonly="1" style="color:#0f4d9b"/>
+                          <field name="xml_comprobante" filename="fname_xml_comprobante" style="color:#0f4d9b"/>
                           <field name="fname_xml_respuesta_tributacion" invisible="1" placeholder="No hay XML"/>
                           <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"  style="color:#0f4d9b"/>
 

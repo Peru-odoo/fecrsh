@@ -189,35 +189,35 @@ class PosOrder(models.Model):
         return super().create(vals)
         #return order
 
-    number_electronic = fields.Char(string="Número electrónico",required=False,copy=False,index=True,)
+    number_electronic = fields.Char(string="Número electrónico",required=False,copy=False,index=True,tracking=True)
     date_issuance = fields.Char(string="Fecha de emisión",required=False,copy=False,)
     tipo_documento = fields.Selection(selection=[
         ("FE", "Factura Electrónica Normal"),
         ("TE", "Tiquete Electrónico"),
         ("NC", "Nota de Crédito"),
     ], string="Tipo Comprobante", required=False, default="FE")
-    state_tributacion = fields.Selection(TRIBUTATION_STATE,string="Estado actual",copy=False,)
+    state_tributacion = fields.Selection(TRIBUTATION_STATE,string="Estado actual",copy=False,tracking=True)
     reference_code_id = fields.Many2one(comodel_name="reference.code",string="Código de referencia",required=False,)
     pos_order_id = fields.Many2one(comodel_name="pos.order",string="Documento de referencia",required=False,copy=False,)
 
     #XML ENVIO
-    xml_respuesta_tributacion = fields.Binary(string="Rpta.Hacienda XML",required=False,copy=False,attachment=True,)
+    xml_respuesta_tributacion = fields.Binary(string="Rpta.Hacienda XML",required=False,copy=False,attachment=True,tracking=True)
     fname_xml_respuesta_tributacion = fields.Char(string="Nombre de archivo XML Respuesta Tributación",required=False,copy=False,)
 
     #XML RESPUESTA
-    xml_comprobante = fields.Binary(string="Comprobante XML",required=False,copy=False,attachment=True,)
+    xml_comprobante = fields.Binary(string="Comprobante XML",required=False,copy=False,attachment=True,tracking=True)
     fname_xml_comprobante = fields.Char(string="Nombre de archivo Comprobante XML",required=False,copy=False,)
     state_email = fields.Selection(
         selection=[
             ("no_email", "Sin cuenta de correo"),
             ("sent", "Enviado"),
             ("fe_error", "Error FE"),
-        ],string="Estado email",copy=False,)
+        ],string="Estado email",copy=False,tracking=True)
     error_count = fields.Integer(string="Cantidad de errores",required=False,default="0",)
 
     sequence = fields.Char(
         string="Consecutivo",
-        readonly=True,
+        readonly=True,tracking=True
     )
     _sql_constraints = [
         (
@@ -341,7 +341,7 @@ class PosOrder(models.Model):
                         attachment_resp.name = doc.fname_xml_respuesta_tributacion
                         email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
                         email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
-                        #email_template.attachment_ids = [(5)]
+                        email_template.attachment_ids = [(5)]
                         doc.state_email = "sent"
                     else:
                         doc.state_email = "no_email"
