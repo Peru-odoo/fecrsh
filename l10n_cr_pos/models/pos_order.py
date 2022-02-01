@@ -341,7 +341,7 @@ class PosOrder(models.Model):
                         attachment_resp.name = doc.fname_xml_respuesta_tributacion
                         email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
                         email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
-                        email_template.attachment_ids = [(5)]
+                        #email_template.attachment_ids = [(5)]
                         doc.state_email = "sent"
                     else:
                         doc.state_email = "no_email"
@@ -389,73 +389,6 @@ class PosOrder(models.Model):
                 )
         _logger.info("MAB - Consulta Hacienda POS- Finalizad Exitosamente")
 
-    @api.model
-    def _reenviacorreos_pos(self, max_orders=1):
-        pos_orders = self.env["pos.order"].search(
-            [
-                ("state", "in", ("paid", "done", "invoiced")),
-                ("date_order", ">=", "2018-09-01"),
-                ("number_electronic", "!=", False),
-                ("state_email", "=", False),
-                ("state_tributacion", "=", "aceptado"),
-            ],
-            limit=max_orders,
-        )
-        total_orders = len(pos_orders)
-        current_order = 0
-        _logger.info("MAB - Reenvia Correos- POS Orders to send: %s", total_orders)
-        for doc in pos_orders:
-            current_order += 1
-            _logger.info(
-                "MAB - Reenvia Correos- POS Order %s - %s / %s",
-                doc.name,
-                current_order,
-                total_orders,
-            )
-            if (
-                doc.partner_id.email
-                and not doc.partner_id.opt_out
-                and doc.state_tributacion == "aceptado"
-            ):
-                comprobante = self.env["ir.attachment"].search(
-                    [
-                        ("res_model", "=", "pos.order"),
-                        ("res_id", "=", doc.id),
-                        ("res_field", "=", "xml_comprobante"),
-                    ],
-                    limit=1,
-                )
-                if not comprobante:
-                    _logger.error("Email no enviado - tiquete sin xml doc: %s", doc.name)
-                    continue
-                try:
-                    comprobante.name = doc.fname_xml_comprobante
-                except:
-                    comprobante.name = "FE_" + doc.number_electronic + ".xml"
-                comprobante.datas_fname = comprobante.name
-                respuesta = self.env["ir.attachment"].search(
-                    [
-                        ("res_model", "=", "pos.order"),
-                        ("res_id", "=", doc.id),
-                        ("res_field", "=", "xml_respuesta_tributacion"),
-                    ],
-                    limit=1,
-                )
-                respuesta.name = doc.fname_xml_respuesta_tributacion
-                respuesta.datas_fname = doc.fname_xml_respuesta_tributacion
-                email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
-                email_template.attachment_ids = [(6, 0, [comprobante.id, respuesta.id])]
-                email_template.with_context(type="binary", default_type="binary").send_mail(
-                    doc.id, raise_exception=False, force_send=True
-                )
-                doc.state_email = "sent"
-            elif doc.state_tributacion in ("rechazado", "rejected"):
-                doc.state_email = "fe_error"
-                _logger.error("email no enviado - factura rechazada. Doc: %s", doc.name)
-            else:
-                doc.state_email = "no_email"
-                _logger.error("email no enviado - cuenta no definida. Doc: %s", doc.name)
-        _logger.info("MAB - Reenvia Correos - Finalizado")
 
     @api.model
     def search_order(self, uid):

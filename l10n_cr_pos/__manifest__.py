@@ -12,7 +12,7 @@
     'maintainer': 'Jhonny M. / BigCloud',
     'website': "https://www.bigcloud.com",
     'category': 'POS / Envío-electrónico',
-    'version': '14.0.4.5',
+    'version': '14.0.4.6',
     'depends': ['point_of_sale', 'account', 'l10n_cr_electronic_invoice'],
     'data': [
         #'security/ir.model.access.csv',
