@@ -12,10 +12,11 @@
     'maintainer': 'Jhonny M. / BigCloud',
     'website': "https://www.bigcloud.com",
     'category': 'POS / Envío-electrónico',
-    'version': '14.0.4.8',
+    'version': '14.0.4.9',
     'depends': ['point_of_sale', 'account', 'l10n_cr_electronic_invoice'],
     'data': [
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
+
         'reports/pos_order_report.xml',
         'data/cron.xml',
         'data/pos_config.xml',
@@ -27,6 +28,10 @@
 
         #************ Assets *********+
         'views/assets.xml',
+
+        #************ Wizards *********+
+        'wizard/pos_order_generate_wizard.xml',
+        'wizard/pos_order_mail_wizard.xml',
 
     ],
     'qweb': ['static/src/xml/OrderReceipt.xml',

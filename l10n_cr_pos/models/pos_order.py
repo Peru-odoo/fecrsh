@@ -450,152 +450,23 @@ class PosOrder(models.Model):
             if not docName.isdigit() or doc.company_id.frm_ws_ambiente == "disabled":
                 _logger.warning("MAB - Valida Hacienda - Omitir factura %s", docName)
                 continue
-            if not doc.xml_comprobante:
-                if doc.is_return == True and doc.amount_total > 0:
-                    _logger.error(
-                        "MAB - Error documento %s tiene monto positivo, pero es nota de crédito en POS. ",
-                        doc.number_electronic,
-                    )
-                    continue
-                if doc.is_return == False and doc.amount_total < 0:
-                    _logger.error(
-                        "MAB - Error documento %s tiene monto negativo, cuando no es nota de crédito POS. ",
-                        doc.number_electronic,
-                    )
-                    continue
 
-                now_utc = datetime.datetime.now(pytz.timezone("UTC"))
-                now_cr = now_utc.astimezone(pytz.timezone("America/Costa_Rica"))
-                dia = docName[3:5]
-                mes = docName[5:7]
-                anno = docName[7:9]
-                date_cr = now_cr.strftime("20" + anno + "-" + mes + "-" + dia + "T%H:%M:%S-06:00")
-                codigo_seguridad = docName[-8:]
-                if not doc.payment_ids.payment_method_id.payment_method_id.ids:
-                    _logger.warning(
-                        "MAB 001 - codigo seguridad : %s  -- Pedido: %s Metodo de pago de diario no definido, utilizando efectivo",
-                        codigo_seguridad,
-                        docName,
-                    )
-                # sale_conditions = "01"
-                currency_rate = 1
-                lines = dict()
-                otros_cargos = dict()
-                otros_cargos_id = 0
-                line_number = 0
-                total_servicio_gravado = 0.0
-                total_servicio_exento = 0.0
-                # total_servicio_exonerado = 0.0  # TODO use
-                total_mercaderia_gravado = 0.0
-                total_mercaderia_exento = 0.0
-                # total_mercaderia_exonerado = 0.0  # TODO use
-                total_descuento = 0.0
-                total_impuestos = 0.0
-                base_subtotal = 0.0
-                total_otros_cargos = 0.0
-                for line in doc.lines:
-                    line_number += 1
-                    price = line.price_unit * (1 - line.discount / 100.0)
-                    qty = abs(line.qty)
-                    if not qty:
-                        continue
-                    fpos = line.order_id.fiscal_position_id
-                    tax_ids = (
-                        fpos.map_tax(line.tax_ids, line.product_id, line.order_id.partner_id)
-                        if fpos
-                        else line.tax_ids
-                    )
-                    line_taxes = tax_ids.compute_all(
-                        price,
-                        line.order_id.pricelist_id.currency_id,
-                        1,
-                        product=line.product_id,
-                        partner=line.order_id.partner_id,
-                    )
-                    # ajustar para IVI
-                    price_unit = round(
-                        line_taxes["total_excluded"] / (1 - line.discount / 100.0), 5
-                    )
-                    base_line = abs(round(price_unit * qty, 5))
-                    subtotal_line = abs(round(price_unit * qty * (1 - line.discount / 100.0), 5))
-                    dline = {
-                        "cantidad": qty,
-                        "unidadMedida": line.product_id and line.product_id.uom_id.code or "Sp",
-                        "cabys_code": line.product_id.cabys_id.code,
-                        "detalle": escape(line.product_id.name[:159]),
-                        "precioUnitario": price_unit,
-                        "montoTotal": base_line,
-                        "subtotal": subtotal_line,
-                    }
-                    if line.discount:
-                        descuento = abs(round(base_line - subtotal_line, 5))
-                        total_descuento += descuento
-                        dline["montoDescuento"] = descuento
-                        dline["naturalezaDescuento"] = "Descuento Comercial"
-                    taxes = dict()
-                    _line_tax = 0.0
-                    if tax_ids:
-                        tax_index = 0
-                        taxes_lookup = {}
-                        for i in tax_ids:
-                            taxes_lookup[i.id] = {
-                                "tax_code": i.tax_code,
-                                "tarifa": i.amount,
-                                "iva_tax_desc": i.iva_tax_desc,
-                                "iva_tax_code": i.iva_tax_code,
-                            }
-                        tax_amount = 0
-                        for i in line_taxes["taxes"]:
-                            if taxes_lookup[i["id"]]["tax_code"] == "service":
-                                total_otros_cargos += tax_amount
-                            elif taxes_lookup[i["id"]]["tax_code"] != "00":
-                                tax_index += 1
-                                tax_amount = abs(round(i["amount"], 5) * qty)
-                                _line_tax += tax_amount
-                                taxes[tax_index] = {
-                                    "codigo": taxes_lookup[i["id"]]["tax_code"],
-                                    "tarifa": taxes_lookup[i["id"]]["tarifa"],
-                                    "monto": tax_amount,
-                                    "iva_tax_desc": taxes_lookup[i["id"]]["iva_tax_desc"],
-                                    "iva_tax_code": taxes_lookup[i["id"]]["iva_tax_code"],
-                                }
-                    dline["impuesto"] = taxes
-                    dline["impuestoNeto"] = _line_tax
-                    if line.product_id and line.product_id.type == "service":
-                        if taxes:
-                            total_servicio_gravado += base_line
-                            total_impuestos += _line_tax
-                        else:
-                            total_servicio_exento += base_line
-                    else:
-                        if taxes:
-                            total_mercaderia_gravado += base_line
-                            total_impuestos += _line_tax
-                        else:
-                            total_mercaderia_exento += base_line
-                    base_subtotal += subtotal_line
-                    dline["montoTotalLinea"] = subtotal_line + _line_tax
-                    lines[line_number] = dline
-                if total_otros_cargos:
-                    otros_cargos_id = 1
-                    tax_amount = abs(round(i["amount"], 5) * qty)
-                    otros_cargos[otros_cargos_id] = {
-                        "TipoDocumento": taxes_lookup[i["id"]]["iva_tax_code"],
-                        "Detalle": escape(taxes_lookup[i["id"]]["iva_tax_desc"]),
-                        "MontoCargo": total_otros_cargos,
-                    }
-                doc.date_issuance = date_cr
-                # invoice_comments = ""
-                xml_string_builder = cr_edi.gen_xml.gen(doc)
-                #xml_to_sign = str(xml_string_builder)
-                xml_firmado = cr_edi.utils.sign_xml(
-                    cert=doc.company_id.signature,
-                    pin=doc.company_id.frm_pin,
-                    xml=xml_string_builder,
+            if doc.is_return == True and doc.amount_total > 0:
+                _logger.error(
+                    "MAB - Error documento %s tiene monto positivo, pero es nota de crédito en POS. ",
+                    doc.number_electronic,
                 )
-                doc.fname_xml_comprobante = doc.tipo_documento + "_" + docName + ".xml"
-                doc.xml_comprobante = base64.encodebytes(xml_firmado)
-                _logger.info("MAB - SIGNED XML:%s", doc.fname_xml_comprobante)
+                continue
+            if doc.is_return == False and doc.amount_total < 0:
+                _logger.error(
+                    "MAB - Error documento %s tiene monto negativo, cuando no es nota de crédito POS. ",
+                    doc.number_electronic,
+                )
+                continue
+
+            if not doc.xml_comprobante:
+                doc, date_cr = self.reload_xml(doc)
+
             token_m_h = cr_edi.auth.get_token(
                 internal_id=doc.company_id.id,
                 username=doc.company_id.frm_ws_identificador,
@@ -686,3 +557,206 @@ class PosOrder(models.Model):
                 o.sudo().unlink()
                 existing_order = False
         return super(PosOrder, self)._process_order(order, draft, existing_order)
+
+
+    #Nuevo 03-02-21
+
+    def reload_xml(self, document=False):
+        if not document:
+            document = self
+        for doc in document:
+            docName = doc.number_electronic
+
+            now_utc = datetime.datetime.now(pytz.timezone("UTC"))
+            now_cr = now_utc.astimezone(pytz.timezone("America/Costa_Rica"))
+            dia = docName[3:5]
+            mes = docName[5:7]
+            anno = docName[7:9]
+            date_cr = now_cr.strftime("20" + anno + "-" + mes + "-" + dia + "T%H:%M:%S-06:00")
+            codigo_seguridad = docName[-8:]
+            if not doc.payment_ids.payment_method_id.payment_method_id.ids:
+                _logger.warning(
+                    "MAB 001 - codigo seguridad : %s  -- Pedido: %s Metodo de pago de diario no definido, utilizando efectivo",
+                    codigo_seguridad,
+                    docName,
+                )
+            # sale_conditions = "01"
+            currency_rate = 1
+            lines = dict()
+            otros_cargos = dict()
+            otros_cargos_id = 0
+            line_number = 0
+            total_servicio_gravado = 0.0
+            total_servicio_exento = 0.0
+            # total_servicio_exonerado = 0.0  # TODO use
+            total_mercaderia_gravado = 0.0
+            total_mercaderia_exento = 0.0
+            # total_mercaderia_exonerado = 0.0  # TODO use
+            total_descuento = 0.0
+            total_impuestos = 0.0
+            base_subtotal = 0.0
+            total_otros_cargos = 0.0
+            for line in doc.lines:
+                line_number += 1
+                price = line.price_unit * (1 - line.discount / 100.0)
+                qty = abs(line.qty)
+                if not qty:
+                    continue
+                fpos = line.order_id.fiscal_position_id
+                tax_ids = (
+                    fpos.map_tax(line.tax_ids, line.product_id, line.order_id.partner_id)
+                    if fpos
+                    else line.tax_ids
+                )
+                line_taxes = tax_ids.compute_all(
+                    price,
+                    line.order_id.pricelist_id.currency_id,
+                    1,
+                    product=line.product_id,
+                    partner=line.order_id.partner_id,
+                )
+                # ajustar para IVI
+                price_unit = round(
+                    line_taxes["total_excluded"] / (1 - line.discount / 100.0), 5
+                )
+                base_line = abs(round(price_unit * qty, 5))
+                subtotal_line = abs(round(price_unit * qty * (1 - line.discount / 100.0), 5))
+                dline = {
+                    "cantidad": qty,
+                    "unidadMedida": line.product_id and line.product_id.uom_id.code or "Sp",
+                    "cabys_code": line.product_id.cabys_id.code,
+                    "detalle": escape(line.product_id.name[:159]),
+                    "precioUnitario": price_unit,
+                    "montoTotal": base_line,
+                    "subtotal": subtotal_line,
+                }
+                if line.discount:
+                    descuento = abs(round(base_line - subtotal_line, 5))
+                    total_descuento += descuento
+                    dline["montoDescuento"] = descuento
+                    dline["naturalezaDescuento"] = "Descuento Comercial"
+                taxes = dict()
+                _line_tax = 0.0
+                if tax_ids:
+                    tax_index = 0
+                    taxes_lookup = {}
+                    for i in tax_ids:
+                        taxes_lookup[i.id] = {
+                            "tax_code": i.tax_code,
+                            "tarifa": i.amount,
+                            "iva_tax_desc": i.iva_tax_desc,
+                            "iva_tax_code": i.iva_tax_code,
+                        }
+                    tax_amount = 0
+                    for i in line_taxes["taxes"]:
+                        if taxes_lookup[i["id"]]["tax_code"] == "service":
+                            total_otros_cargos += tax_amount
+                        elif taxes_lookup[i["id"]]["tax_code"] != "00":
+                            tax_index += 1
+                            tax_amount = abs(round(i["amount"], 5) * qty)
+                            _line_tax += tax_amount
+                            taxes[tax_index] = {
+                                "codigo": taxes_lookup[i["id"]]["tax_code"],
+                                "tarifa": taxes_lookup[i["id"]]["tarifa"],
+                                "monto": tax_amount,
+                                "iva_tax_desc": taxes_lookup[i["id"]]["iva_tax_desc"],
+                                "iva_tax_code": taxes_lookup[i["id"]]["iva_tax_code"],
+                            }
+                dline["impuesto"] = taxes
+                dline["impuestoNeto"] = _line_tax
+                if line.product_id and line.product_id.type == "service":
+                    if taxes:
+                        total_servicio_gravado += base_line
+                        total_impuestos += _line_tax
+                    else:
+                        total_servicio_exento += base_line
+                else:
+                    if taxes:
+                        total_mercaderia_gravado += base_line
+                        total_impuestos += _line_tax
+                    else:
+                        total_mercaderia_exento += base_line
+                base_subtotal += subtotal_line
+                dline["montoTotalLinea"] = subtotal_line + _line_tax
+                lines[line_number] = dline
+            if total_otros_cargos:
+                otros_cargos_id = 1
+                tax_amount = abs(round(i["amount"], 5) * qty)
+                otros_cargos[otros_cargos_id] = {
+                    "TipoDocumento": taxes_lookup[i["id"]]["iva_tax_code"],
+                    "Detalle": escape(taxes_lookup[i["id"]]["iva_tax_desc"]),
+                    "MontoCargo": total_otros_cargos,
+                }
+            doc.date_issuance = date_cr
+            # invoice_comments = ""
+            xml_string_builder = cr_edi.gen_xml.gen(doc)
+            # xml_to_sign = str(xml_string_builder)
+            xml_firmado = cr_edi.utils.sign_xml(
+                cert=doc.company_id.signature,
+                pin=doc.company_id.frm_pin,
+                xml=xml_string_builder,
+            )
+            doc.fname_xml_comprobante = doc.tipo_documento + "_" + docName + ".xml"
+            doc.xml_comprobante = base64.encodebytes(xml_firmado)
+            _logger.info("MAB - SIGNED XML:%s", doc.fname_xml_comprobante)
+
+            return doc, date_cr
+
+
+    def reload_response_xml(self):
+        doc = self
+        token_m_h = cr_edi.auth.get_token(
+            internal_id=doc.company_id.id,
+            username=doc.company_id.frm_ws_identificador,
+            password=doc.company_id.frm_ws_password,
+            client_id=doc.company_id.frm_ws_ambiente,
+        )
+        if doc.number_electronic and len(doc.number_electronic) == 50:
+            response_json = cr_edi.api.query_document(
+                clave=doc.number_electronic,
+                token=token_m_h,
+                client_id=doc.company_id.frm_ws_ambiente,
+            )
+            status = response_json["status"]
+            if status == 200:
+                estado_m_h = response_json.get("ind-estado")
+            elif status == 400:
+                estado_m_h = response_json.get("ind-estado")
+                _logger.error(
+                    "MAB - Error: %s Documento:%s no encontrado en Hacienda",
+                    estado_m_h,
+                    doc.number_electronic,
+                )
+            else:
+                _logger.error("MAB - Error inesperado en Consulta Hacienda - Abortando")
+                return
+            if estado_m_h == "aceptado":
+                doc.state_tributacion = estado_m_h
+                doc.fname_xml_respuesta_tributacion = "AHC_" + doc.number_electronic + ".xml"
+                doc.xml_respuesta_tributacion = response_json.get("respuesta-xml")
+
+
+
+    def _send_mail(self):
+        if not self.xml_comprobante or not self.xml_respuesta_tributacion:
+            raise ValidationError(_("Asegúrese de tener los xml de envío y respuesta de hacienda."))
+
+        if self.partner_id and self.partner_id.email:
+            email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
+            attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
+                                                           ("res_id", "=", self.id),
+                                                           ("res_field", "=", "xml_comprobante")
+                                                           ], limit=1)
+            attachment.name = self.fname_xml_comprobante
+
+            # archivo xml de envio y respuesta del comprobante en odoo
+            attachment_resp = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
+                                                                ("res_id", "=", self.id),
+                                                                ("res_field", "=", "xml_respuesta_tributacion")
+                                                                ], limit=1)
+            attachment_resp.name = self.fname_xml_respuesta_tributacion
+            email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
+            email_template.with_context(type="binary", default_type="binary").send_mail(self.id, raise_exception=False, force_send=True)
+            # email_template.attachment_ids = [(5)]
+            self.state_email = "sent"
+
