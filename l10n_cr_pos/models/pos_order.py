@@ -341,7 +341,7 @@ class PosOrder(models.Model):
                         attachment_resp.name = doc.fname_xml_respuesta_tributacion
                         email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
                         email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
-                        email_template.attachment_ids = [(5)]
+                        #email_template.attachment_ids = [(5)]
                         doc.state_email = "sent"
                     else:
                         doc.state_email = "no_email"
