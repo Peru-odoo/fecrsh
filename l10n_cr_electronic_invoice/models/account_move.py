@@ -906,6 +906,7 @@ class AccountInvoice(models.Model):
                 seq = self.journal_id.sequence_refund_id.next_by_id()
             new_name = name + '-' + seq
             self.name = new_name
+            self.payment_reference = self.name
 
 
     def _get_new_name(self):
@@ -921,17 +922,18 @@ class AccountInvoice(models.Model):
             name = 'R'+name
         new_name = name+'-'+pad
         self.name = new_name
+        self.payment_reference = self.name
 
     def validations(self):
         for inv in self:
             if inv.move_type == 'out_refund' and not inv.reference_code_id:
                 raise UserError(_("Al ser una nota de crédito, debe validar que tipo es. Complete la campo 'Tipo nota crédito' "))
 
-            if not inv.partner_id.email and inv.move_type != 'entry':
+            if not inv.partner_id.email and inv.move_type != 'entry' and inv.tipo_documento != 'TE':
                 raise UserError(_("Valide que el cliente tenga un correo electrónico "))
 
-            if inv.tipo_documento == 'TE':
-                raise UserError(_("El tipo de documento para Ticket no está configurado para facturas. "))
+            # if inv.tipo_documento == 'TE':
+            #     raise UserError(_("El tipo de documento para Ticket no está configurado para facturas. "))
 
 
             invs = self.env['account.move'].search([('id','!=', inv.id),

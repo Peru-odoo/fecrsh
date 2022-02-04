@@ -18,6 +18,7 @@ class Templates:
     TiqueteElectronico = utils.get_template("TiqueteElectronico.xml.jinja")
     FacturaElectronicaPos = utils.get_template("FacturaElectronicaPos.xml.jinja")
     NotaCreditoElectronicaPos = utils.get_template("NotaCreditoElectronicaPos.xml.jinja")
+    TiqueteElectronicoInvoice = utils.get_template("TiqueteElectronicoInvoice.xml.jinja")
 
 
 def mensaje_receptor(
@@ -63,6 +64,7 @@ DOCUMENT_TYPE_TO_TEMPLATE = {
     "TE": Templates.TiqueteElectronico,
     "FEP": Templates.FacturaElectronicaPos, #Caso especial para factura eletrónica desde POS
     "NCP": Templates.NotaCreditoElectronicaPos, #Caso especial para nota de crédito eletrónica desde POS
+    "TEI": Templates.TiqueteElectronicoInvoice, #Caso especial para tiquete electrónico desde módulo de facturación
 }
 
 type_template = {
@@ -179,7 +181,10 @@ def gen(document):
         }
     #TODO: PARA COMPROBANTES DE CONTABILIDAD
     else:
-        template = DOCUMENT_TYPE_TO_TEMPLATE[document.tipo_documento]
+        if document.tipo_documento == 'TE':
+            template = DOCUMENT_TYPE_TO_TEMPLATE['TEI'] #Tiquete electrónico desde el módulo de facturación
+        else:
+            template = DOCUMENT_TYPE_TO_TEMPLATE[document.tipo_documento]
         if document.tipo_documento == "FEC":  # TODO only in this case?
             (issuer, receiver) = (receiver, issuer)
         args = {
@@ -239,10 +244,13 @@ def gen_from_template(
     else:
         lineas = document._get_lines_xml(lines)
         amounts = document.get_amounts(lineas)
-        phone_obj_receiver = phonenumbers.parse(
-            receiver.phone,
-            (receiver.country_id or issuer.country_id) and (receiver.country_id.code or issuer.country_id.code)
-        )
+        if document.tipo_documento == 'TE':
+            phone_obj_receiver = None
+        else:
+            phone_obj_receiver = phonenumbers.parse(
+                receiver.phone,
+                (receiver.country_id or issuer.country_id) and (receiver.country_id.code or issuer.country_id.code)
+            )
         render = template.render(
             document=document,
             activity_code=activity_code,
