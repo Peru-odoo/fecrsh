@@ -797,9 +797,7 @@ class AccountInvoice(models.Model):
                 continue
 
             invoice.message_post(subject=_("Error"), body=response_text)
-            _logger.error("E-INV CR  - Invoice: {}  Status: {} Error sending XML: {}").format(
-                invoice.number_electronic, response_status, response_text
-            )
+            _logger.error("E-INV CR  - Invoice: {}  Status: {} Error sending XML: {}".format(invoice.number_electronic, response_status, response_text))
             invoice.electronic_invoice_return_message = response_text
             invoice.state_tributacion = "error"
 
