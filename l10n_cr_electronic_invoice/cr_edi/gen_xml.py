@@ -175,7 +175,7 @@ def gen(document):
             #"activity_code": document.company_id.pos_activity_id.code,
             "activity_code": issuer.activity_ids[0].code,
             "currency_rate": document.currency_rate,
-            "notes": None,
+            "notes": document.note,
             "reference": document.pos_order_id,
             "reference_code": document.reference_code_id,
         }

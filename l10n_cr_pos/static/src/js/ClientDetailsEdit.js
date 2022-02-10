@@ -31,6 +31,18 @@ odoo.define('l10n_cr_pos.ClientDetailsEdit', function(require) {
                 });
             }
 
+            if(event.target.name=='country_id'){
+                 var states = this.env.pos.states;
+                 var states_html = ""
+                 for(var i=0; i < states.length; i++){
+                    if(states[i].country_id[0] == parseInt(event.target.value)){
+                        states_html+= "<option value="+states[i].id +" >"+ states[i].name +"</option>";
+                    }
+                 }
+                 $('select[name="state_id"]').empty();
+                 $('select[name="state_id"]').html(states_html);
+            }
+
             if(event.target.name=='state_id'){
                  var counties = this.env.pos.list_county;
                  var counties_html = ""
