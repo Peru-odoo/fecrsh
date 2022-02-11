@@ -1,6 +1,6 @@
 {
     "name": "FECR",
-    "version": "14.0.7.15",
+    "version": "14.0.7.16",
     "category": "Accounting",
     "summary": "Factura electrónica para Costa Rica",
     "author": "XALACHI",
@@ -64,6 +64,7 @@
         "wizard/account_move_reversal_view.xml",
         "views/account_tax_views.xml",  # Nuevo 18-10-2021
         "wizard/account_report_iva_wizard.xml",  # Nuevo 14-10-2021
+        "wizard/account_move_generate_xml_wizard.xml",  # Nuevo 11-02-2022
     ],
     "external_dependencies": {
         "python": [

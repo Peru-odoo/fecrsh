@@ -1182,3 +1182,30 @@ class AccountInvoice(models.Model):
                 else:
                     raise ValidationError(_("Debe ser un archivo con extensión .xml "))
 
+
+
+    def _reaload_response_xml(self):
+        for invoice in self:
+            response_json = cr_edi.api.query_document(
+                clave=invoice.number_electronic,
+                token=invoice.company_id.get_token(),
+                client_id=invoice.company_id.frm_ws_ambiente,
+            )
+
+            status = response_json["status"]
+
+            state = response_json.get("ind-estado")
+            if status == 200:
+                invoice.fname_xml_respuesta_tributacion = (
+                    "AHC_" + invoice.number_electronic + ".xml"
+                )
+                invoice.xml_respuesta_tributacion = response_json.get("respuesta-xml")
+
+                # # Enviar mail cuando el comprobant es Aceptado por Hacienda
+                # if state == "aceptado":
+                #     invoice._send_mail()
+                # elif state == "firma_invalida":
+                #     invoice.state_email = "fe_error"
+                #     _logger.warning("Mail no sended - Invoice rejected")
+                # elif state == "rechazado":
+                #     invoice._process_rejection(state)

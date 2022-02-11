@@ -12,3 +12,4 @@ access_res_partner_tax,res.partner.tax,model_res_partner_tax,base.group_user,1,1
 
 access_account_move_import_config,account.move.import.config,model_account_move_import_config,account.group_account_invoice,1,1,1,1
 access_account_report_iva_wizard,account.report.iva.wizard,model_account_report_iva_wizard,account.group_account_invoice,1,1,1,1
+access_account_move_generate_xml,account.move.generate.xml,model_account_move_generate_xml,base.group_user,1,1,1,1
