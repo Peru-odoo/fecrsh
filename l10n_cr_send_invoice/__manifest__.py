@@ -1,6 +1,6 @@
 {
     "name": "L10N CR Send Invoice",
-    "version": "14.0.1.1",
+    "version": "14.0.1.2",
     "author": "HomebrewSoft",
     "website": "https://homebrewsoft.dev",
     "license": "LGPL-3",

@@ -35,13 +35,33 @@ class AccountInvoice(models.Model):
         if self.partner_id and self.partner_id.email:
             email_values = {}
 
-            attachment_comprobante = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"), ("res_id", "=", self.id),
-                                                                                   ("res_field", "=", "xml_comprobante"), ], limit=1)
-            attachment_response = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"), ("res_id", "=", self.id),
-                                                                                ("res_field", "=", "xml_respuesta_tributacion"), ], limit=1)
+            # attachment_comprobante = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"), ("res_id", "=", self.id),
+            #                                                                        ("res_field", "=", "xml_comprobante"), ], limit=1)
+            # attachment_response = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"), ("res_id", "=", self.id),
+            #                                                                     ("res_field", "=", "xml_respuesta_tributacion"), ], limit=1)
 
-            if attachment_response and attachment_comprobante:
-                email_values['attachment_ids'] = [(4, attachment_comprobante[0]['id']), (4, attachment_response[0]['id'])]
+            attachment_search = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"),
+                                                                               ("res_id", "=", self.id),
+                                                                               ("res_field", "=", "xml_comprobante"),],limit=1)
+
+            attachment_response = False
+            attachment_comprobante = False
+
+            if attachment_search:
+                attachment_comprobante = self.env["ir.attachment"].browse(attachment_search[0]["id"])
+                attachment_comprobante.name = self.fname_xml_comprobante
+
+                attachment_resp_search = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "account.move"),
+                                                                                       ("res_id", "=", self.id),
+                                                                                       ("res_field", "=", "xml_respuesta_tributacion"),],limit=1)
+
+
+                if attachment_resp_search:
+                    attachment_response = self.env["ir.attachment"].browse(attachment_resp_search[0]["id"])
+                    attachment_response.name = self.fname_xml_respuesta_tributacion
+
+                if attachment_response and attachment_comprobante:
+                    email_values['attachment_ids'] = [(4, attachment_comprobante[0]['id']), (4, attachment_response[0]['id'])]
 
             else:
                 raise UserError(_("El comprobante debe tener xml"))
