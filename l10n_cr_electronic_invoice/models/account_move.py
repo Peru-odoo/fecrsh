@@ -388,6 +388,13 @@ class AccountInvoice(models.Model):
         self.fname_xml_respuesta_tributacion = "RPTA_{}.xml".format(self.number_electronic)
         self.xml_respuesta_tributacion = response_json.get("respuesta-xml")
 
+        message_body = "<p><b>RESPUESTA DE HACIENDA</b></p>"
+        if type(response_json) == dict:
+            for k, v in response_json.items():
+                message_body += "<b>" + str(k) + " : </b> " + str(v) + " <br/>"
+
+        self.message_post(body=message_body, subtype_xmlid="mail.mt_note", message_type='comment')
+
         """Quitar envío de mail"""
 
     def send_mrs_to_hacienda(self):

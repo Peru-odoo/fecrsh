@@ -83,28 +83,39 @@
 
                         <!--para proveedores-->
                         <field name="fname_xml_supplier_approval" invisible="1"/>
-                        <label for="xml_supplier_approval" string="Comprobante XML"/>
+                        <label for="xml_supplier_approval" string="Comprobante XML" attrs="{'invisible': [('move_type','not in',['in_invoice','in_refund'])]}"/>
                         <div id="div_xml_supplier_approval">
-                            <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" string="Comprobante XML" class="mb-0 oe_inline"/>
+                            <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" string="Comprobante XML" class="mb-0 oe_inline"
+                                   attrs="{'invisible': [('move_type','not in',['in_invoice','in_refund'])]}"/>
                             <button name="upload_xml_supplier" string="Cargar datos de XML" type="object" icon="fa-arrow-right"
                                     class="btn btn-link pt-0"
-                                    attrs="{'invisible': [('xml_supplier_approval','=',False)]}"
+                                    attrs="{'invisible': ['|',('xml_supplier_approval','=',False),('move_type','not in',['in_invoice','in_refund'])]}"
                             />
                         </div>
                         <!--                        <field name="xml_supplier_approval" filename="fname_xml_supplier_approval" />-->
                         <field name="date_issuance" attrs="{'invisible':[('move_type','!=','in_invoice')]}" string="Fecha emisión"/>
-                        <field name="from_mail" string="Proviene de email?"/>
+                        <field name="from_mail" string="Proviene de email?" attrs="{'invisible': [('move_type','not in',['in_invoice','in_refund'])]}"/>
 
                         <field name="state_send_invoice" string="Estado" style="color:#24e112"
-                               attrs="{'invisible':[('move_type','!=','in_invoice')]}"/>
+                               attrs="{'invisible': [('move_type','not in',['in_invoice','in_refund'])]}"/>
 
                         <!--para xml-->
                         <field name="fname_xml_respuesta_tributacion" invisible="1"/>
                         <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"
                                string="Respuesta XML" style="color:#0f4d9b"/>
                         <field name="fname_xml_comprobante" invisible="1"/>
-                        <field name="xml_comprobante" filename="fname_xml_comprobante" string="Comprobante XML"
-                               style="color:#0f4d9b"/>
+                        <label for="xml_comprobante" string="Comprobante XML" attrs="{'invisible': [('move_type','not in',['out_invoice','out_refund'])]}"/>
+                        <div id="div_xml_comprobante">
+                            <field name="xml_comprobante" filename="fname_xml_comprobante" string="Comprobante XML" class="mb-0 oe_inline"
+                                   style="color:#0f4d9b" attrs="{'invisible': [('move_type','not in',['out_invoice','out_refund'])]}"/>
+                            <button name="generate_and_send_invoices" string="Reenviar hacienda" type="object" icon="fa-arrow-right"
+                                    class="btn btn-link pt-0"
+                                    attrs="{'invisible': ['|', ('state_tributacion','not in', ['error','firma_invalida','na','ne'] ),
+                                                               ('move_type','not in',['out_invoice','out_refund'])]}"
+                            />
+                        </div>
+
+
                         <field name="electronic_invoice_return_message" invisible="1"/>
                     </group>
 
@@ -256,7 +267,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">
-             <xpath expr="//field[@name='company_id']" position="after">
+            <xpath expr="//field[@name='company_id']" position="after">
                 <field name="currency_id"/>
             </xpath>
             <xpath expr="//field[@name='currency_id']" position="attributes">
