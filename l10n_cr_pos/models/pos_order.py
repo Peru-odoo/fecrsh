@@ -12,7 +12,7 @@ import pytz
 import json
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 from odoo.addons.l10n_cr_electronic_invoice import cr_edi
 
@@ -326,23 +326,7 @@ class PosOrder(models.Model):
                     doc.fname_xml_respuesta_tributacion = "AHC_" + doc.number_electronic + ".xml"
                     doc.xml_respuesta_tributacion = response_json.get("respuesta-xml")
                     if doc.partner_id and doc.partner_id.email:
-                        email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
-                        attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                                       ("res_id", "=", doc.id),
-                                                                       ("res_field", "=", "xml_comprobante")
-                                                                       ],limit=1)
-                        attachment.name = doc.fname_xml_comprobante
-
-                        #archivo xml de envio y respuesta del comprobante en odoo
-                        attachment_resp = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                                            ("res_id", "=", doc.id),
-                                                                            ("res_field", "=", "xml_respuesta_tributacion")
-                                                                            ],limit=1)
-                        attachment_resp.name = doc.fname_xml_respuesta_tributacion
-                        email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
-                        email_template.with_context(type="binary", default_type="binary").send_mail(doc.id, raise_exception=False, force_send=True)
-                        #email_template.attachment_ids = [(5)]
-                        doc.state_email = "sent"
+                        doc._send_mail()
                     else:
                         doc.state_email = "no_email"
                         _logger.info("email no enviado - cliente no definido")
@@ -742,21 +726,32 @@ class PosOrder(models.Model):
             raise ValidationError(_("Asegúrese de tener los xml de envío y respuesta de hacienda."))
 
         if self.partner_id and self.partner_id.email:
+            email_values = {}
             email_template = self.env.ref("l10n_cr_pos.email_template_pos_invoice", False)
-            attachment = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                           ("res_id", "=", self.id),
-                                                           ("res_field", "=", "xml_comprobante")
-                                                           ], limit=1)
-            attachment.name = self.fname_xml_comprobante
+            attachment_search = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "pos.order"),
+                                                                              ("res_id", "=", self.id),
+                                                                              ("res_field", "=", "xml_comprobante"), ], limit=1)
+            attachment_response = False
+            attachment_comprobante = False
+            if attachment_search:
+                attachment_comprobante = self.env["ir.attachment"].browse(attachment_search[0]["id"])
+                attachment_comprobante.name = self.fname_xml_comprobante
 
-            # archivo xml de envio y respuesta del comprobante en odoo
-            attachment_resp = self.env["ir.attachment"].search([("res_model", "=", "pos.order"),
-                                                                ("res_id", "=", self.id),
-                                                                ("res_field", "=", "xml_respuesta_tributacion")
-                                                                ], limit=1)
-            attachment_resp.name = self.fname_xml_respuesta_tributacion
-            email_template.attachment_ids = [(6, 0, [attachment.id, attachment_resp.id])]
-            email_template.with_context(type="binary", default_type="binary").send_mail(self.id, raise_exception=False, force_send=True)
-            # email_template.attachment_ids = [(5)]
+                attachment_resp_search = self.env["ir.attachment"].sudo().search_read([("res_model", "=", "pos.order"),
+                                                                                       ("res_id", "=", self.id),
+                                                                                       ("res_field", "=", "xml_respuesta_tributacion"), ], limit=1)
+
+                if attachment_resp_search:
+                    attachment_response = self.env["ir.attachment"].browse(attachment_resp_search[0]["id"])
+                    attachment_response.name = self.fname_xml_respuesta_tributacion
+
+                if attachment_response and attachment_comprobante:
+                    email_values['attachment_ids'] = [(4, attachment_comprobante[0]['id']), (4, attachment_response[0]['id'])]
+
+
+            else:
+                raise UserError(_("El comprobante debe tener xml"))
+
+            email_template.sudo().send_mail(self.id, force_send=True, email_values=email_values, notif_layout='mail.mail_notification_light')
             self.state_email = "sent"
 
