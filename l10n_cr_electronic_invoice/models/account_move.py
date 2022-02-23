@@ -391,7 +391,10 @@ class AccountInvoice(models.Model):
         message_body = "<p><b>RESPUESTA DE HACIENDA</b></p>"
         if type(response_json) == dict:
             for k, v in response_json.items():
-                message_body += "<b>" + str(k) + " : </b> " + str(v) + " <br/>"
+                if state == 200 and k in ('text','respuesta-xml'):
+                    pass
+                else:
+                    message_body += "<b>" + str(k) + " : </b> " + str(v) + " <br/>"
 
         self.message_post(body=message_body, subtype_xmlid="mail.mt_note", message_type='comment')
 

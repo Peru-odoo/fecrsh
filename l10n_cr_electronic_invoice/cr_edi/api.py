@@ -63,10 +63,11 @@ def send_xml(client_id, token, xml, date, electronic_number, issuer, receiver):
         "comprobanteXml": _encode_and_decode(xml),
     }
     if receiver:
-        data["receptor"] = {
-            "tipoIdentificacion": receiver.identification_id.code,
-            "numeroIdentificacion": receiver.vat,
-        }
+        if receiver.identification_id and receiver.vat:
+            data["receptor"] = {
+                "tipoIdentificacion": receiver.identification_id.code,
+                "numeroIdentificacion": receiver.vat,
+            }
 
     response_processed = _send_post(client_id, token, data)
     return response_processed
