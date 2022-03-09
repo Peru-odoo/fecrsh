@@ -20,7 +20,7 @@ MOVE_INVOICE = {
 def parseXml(self, values, attachments, invoice_import_ids):
     vals = {}
     for att in attachments:
-        if att and att.fname[-3:] == "xml":
+        if att and att.fname[-3:] in ["xml",".XML"]:
             rs = email_xml_to_invoice(self, att, invoice_import_ids)
             vals.update(rs)
     return vals
@@ -86,6 +86,7 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
             "%Y-%m-%dT%H:%M:%S-06:00",
             "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%dT%H:%M:%S.%f",
+            "%Y-%m-%dT%H:%M:%SZ",
         ]
         for date_format in date_formats:
             try:
@@ -94,7 +95,7 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
             except ValueError:
                 continue
         else:
-            _logger.error("No valid date format for {}").format(date_issuance)
+            _logger.error("No valid date format for {}".format(date_issuance))
             r = 0
         invoice_date = date_time_obj.date()
 
