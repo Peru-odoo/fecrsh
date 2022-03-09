@@ -1178,7 +1178,7 @@ class AccountInvoice(models.Model):
             values['journal_id'] = invoice_import_ids.journal_id.id
             logging.info("-------- Parseando xml a factura --------")
             if self.xml_supplier_approval:
-                if self.fname_xml_supplier_approval[-3:] == "xml":
+                if self.fname_xml_supplier_approval[-3:] in ["xml","XML","Xml"]:
                     vals = utils.parse_xml.upload_xml_to_invoice(self, self.xml_supplier_approval, invoice_import_ids)
                     values.update(vals)
                     values['tipo_documento'] = 'CCE'

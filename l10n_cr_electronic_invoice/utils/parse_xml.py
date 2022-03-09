@@ -20,7 +20,7 @@ MOVE_INVOICE = {
 def parseXml(self, values, attachments, invoice_import_ids):
     vals = {}
     for att in attachments:
-        if att and att.fname[-3:] in ["xml",".XML"]:
+        if att and att.fname[-3:] in ["xml","XML","Xml"]:
             rs = email_xml_to_invoice(self, att, invoice_import_ids)
             vals.update(rs)
     return vals
