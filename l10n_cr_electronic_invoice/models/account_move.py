@@ -943,14 +943,26 @@ class AccountInvoice(models.Model):
             # if inv.tipo_documento == 'TE':
             #     raise UserError(_("El tipo de documento para Ticket no está configurado para facturas. "))
 
+            invs = False
+            if inv.move_type in ('out_invoice','out_refund'):
 
-            invs = self.env['account.move'].search([('id','!=', inv.id),
-                                                    ('number_electronic', '=', number_electronic),
-                                                    ('number_electronic', '!=', False),
-                                                    ('move_type', '=', 'in_invoice'),
-                                                    ('state_send_invoice', 'in', [False, 'aceptado', 'procesando']),
-                                                    ('state', '!=', 'cancel')
-                                                    ])
+                invs = self.env['account.move'].search([('id','!=', inv.id),
+                                                        ('company_id','=',inv.company_id.id),
+                                                        ('number_electronic','=',inv.number_electronic),
+                                                        ('number_electronic','!=',False),
+                                                        ('move_type','in',['out_invoice','out_refund']),
+                                                        ('state_tributacion', 'in', [False, 'aceptado', 'procesando']),
+                                                        ('state', '!=', 'cancel')
+                                                        ])
+            elif inv.move_type in ('in_invoice','in_refund'):
+                invs = self.env['account.move'].search([('id', '!=', inv.id),
+                                                        ('company_id', '=', inv.company_id.id),
+                                                        ('number_electronic', '=', inv.number_electronic),
+                                                        ('number_electronic', '!=', False),
+                                                        ('move_type', 'in', ['in_invoice','in_refund']),
+                                                        ('state_send_invoice', 'in', [False, 'aceptado', 'procesando']),
+                                                        ('state', '!=', 'cancel')
+                                                        ])
 
             if invs:
                 raise UserError(_("La clave de comprobante debe ser única. Puede ser que este comprobante ya esté registrado."))
