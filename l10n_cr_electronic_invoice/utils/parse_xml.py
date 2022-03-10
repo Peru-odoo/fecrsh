@@ -130,6 +130,7 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
                                                 ('number_electronic', '=', number_electronic),
                                                 ('number_electronic', '!=', False),
                                                 ('move_type', '=', 'in_invoice'),
+                                                ('state_send_invoice', 'in', [False, 'aceptado','procesando']),
                                                 ])
         if invs:
             _logger.info('La clave de comprobante debe ser única. Puede ser que este comprobante ya esté registrado.')
