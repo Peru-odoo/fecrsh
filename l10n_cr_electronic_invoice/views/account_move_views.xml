@@ -104,10 +104,10 @@
                         <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"
                                string="Respuesta XML" style="color:#0f4d9b"/>
                         <field name="fname_xml_comprobante" invisible="1"/>
-                        <label for="xml_comprobante" string="Comprobante XML" attrs="{'invisible': [('move_type','not in',['out_invoice','out_refund'])]}"/>
+                        <label for="xml_comprobante" string="Comprobante XML" />
                         <div id="div_xml_comprobante">
                             <field name="xml_comprobante" filename="fname_xml_comprobante" string="Comprobante XML" class="mb-0 oe_inline"
-                                   style="color:#0f4d9b" attrs="{'invisible': [('move_type','not in',['out_invoice','out_refund'])]}"/>
+                                   style="color:#0f4d9b" />
                             <button name="generate_and_send_invoices" string="Reenviar hacienda" type="object" icon="fa-arrow-right"
                                     class="btn btn-link pt-0"
                                     attrs="{'invisible': ['|', ('state_tributacion','not in', ['error','firma_invalida','na','ne'] ),

@@ -65,7 +65,7 @@ def upload_xml_to_invoice(self, attachment, invoice_import_ids):
 
 
 def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
-    if root.tag in ('FacturaElectronica', 'NotaCreditoElectronica', 'NotaDebitoElectronica'):
+    if root.tag in ('FacturaElectronica', 'NotaCreditoElectronica', 'NotaDebitoElectronica','TiqueteElectronico'):
 
         dict_type_document = MOVE_INVOICE[root.tag]
 
@@ -87,6 +87,7 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
             "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%dT%H:%M:%S.%f",
             "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%dT%H:%M:%S.%f-06",
         ]
         for date_format in date_formats:
             try:
