@@ -945,10 +945,11 @@ class AccountInvoice(models.Model):
 
 
             invs = self.env['account.move'].search([('id','!=', inv.id),
-                                                    ('company_id','=',inv.company_id.id),
-                                                    ('number_electronic','=',inv.number_electronic),
-                                                    ('number_electronic','!=',False),
-                                                    ('move_type','=',inv.move_type),
+                                                    ('number_electronic', '=', number_electronic),
+                                                    ('number_electronic', '!=', False),
+                                                    ('move_type', '=', 'in_invoice'),
+                                                    ('state_send_invoice', 'in', [False, 'aceptado', 'procesando']),
+                                                    ('state', '!=', 'cancel')
                                                     ])
 
             if invs:

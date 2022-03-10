@@ -131,9 +131,10 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
                                                 ('number_electronic', '!=', False),
                                                 ('move_type', '=', 'in_invoice'),
                                                 ('state_send_invoice', 'in', [False, 'aceptado','procesando']),
+                                                ('state','!=','cancel')
                                                 ])
         if invs:
-            _logger.info('La clave de comprobante debe ser única. Puede ser que este comprobante ya esté registrado.')
+            _logger.info('La clave del comprobante debe ser única. Puede ser que este comprobante ya esté registrado.')
             return {}
 
         currency_node = factura.xpath("inv:ResumenFactura/inv:CodigoTipoMoneda/inv:CodigoMoneda", namespaces=namespaces)
