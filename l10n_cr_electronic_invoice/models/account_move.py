@@ -390,8 +390,11 @@ class AccountInvoice(models.Model):
 
         message_body = "<p><b>RESPUESTA DE HACIENDA</b></p>"
         if type(response_json) == dict:
+            response_json_status = 0
+            if 'status' in response_json:
+                response_json_status = response_json['status']
             for k, v in response_json.items():
-                if state == 200 and k in ('text','respuesta-xml'):
+                if response_json_status == 200 and k in ('text', 'respuesta-xml'):
                     pass
                 else:
                     message_body += "<b>" + str(k) + " : </b> " + str(v) + " <br/>"
