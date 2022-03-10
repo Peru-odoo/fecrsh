@@ -955,7 +955,8 @@ class AccountInvoice(models.Model):
                                                         ('number_electronic','!=',False),
                                                         ('move_type','in',['out_invoice','out_refund']),
                                                         ('state_tributacion', 'in', [False, 'aceptado', 'procesando']),
-                                                        ('state', '!=', 'cancel')
+                                                        ('state', '!=', 'cancel'),
+                                                        ('payment_state', '!=', 'reversed'),
                                                         ])
             elif inv.move_type in ('in_invoice','in_refund'):
                 invs = self.env['account.move'].search([('id', '!=', inv.id),
@@ -964,7 +965,8 @@ class AccountInvoice(models.Model):
                                                         ('number_electronic', '!=', False),
                                                         ('move_type', 'in', ['in_invoice','in_refund']),
                                                         ('state_send_invoice', 'in', [False, 'aceptado', 'procesando']),
-                                                        ('state', '!=', 'cancel')
+                                                        ('state', '!=', 'cancel'),
+                                                        ('payment_state', '!=', 'reversed'),
                                                         ])
 
             if invs:
