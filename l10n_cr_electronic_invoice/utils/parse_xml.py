@@ -63,7 +63,6 @@ def upload_xml_to_invoice(self, attachment, invoice_import_ids):
     fname = self.fname_xml_supplier_approval
     return data_xml(self, root, factura, invoice_import_ids, fname, xml_code)
 
-
 def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
     if root.tag in ('FacturaElectronica', 'NotaCreditoElectronica', 'NotaDebitoElectronica','TiqueteElectronico'):
 
@@ -186,6 +185,7 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
         medio_pago_code = factura.xpath("inv:MedioPago", namespaces=namespaces)[0].text
         medio_pago = self.env['payment.methods'].sudo().search([('sequence', '=', medio_pago_code)], limit=1)
 
+        discount_total_node = factura.xpath("inv:ResumenFactura/inv:TotalDescuentos", namespaces=namespaces)
         tax_node = factura.xpath("inv:ResumenFactura/inv:TotalImpuesto", namespaces=namespaces)
 
         amount_tax_electronic_invoice = 0.0
@@ -194,27 +194,61 @@ def data_xml(self, root, factura, invoice_import_ids, fname, xml_code):
 
         amount_total_electronic_invoice = factura.xpath("inv:ResumenFactura/inv:TotalComprobante", namespaces=namespaces)[0].text
 
-        lines = root.find("DetalleServicio").findall("LineaDetalle")
-
-        account = invoice_import_ids.account_id
-        tax_ids = invoice_import_ids.tax_id
-        journal_id = invoice_import_ids.journal_id.id
-        product_product_id = invoice_import_ids.product_id
-        analytic_id = invoice_import_ids.account_analytic_id
-
-        # Tipo de línea en el detalle del comprobante
-        line_type = invoice_import_ids.line_type
-
         payment_method_id = False
         if invoice_import_ids.supplier_metodo_pago:
             payment_method_id = invoice_import_ids.supplier_metodo_pago
 
+        detalle_servicio = root.find("DetalleServicio") #original
+
+        otros_cargos = root.find('OtrosCargos') #añadido 14-03-20221: caso especial 1
+
+        informacion_referencia = root.find('InformacionReferencia') #añadido 14-03-20221: caso especial 2
+
         invoice_line_ids = False
-        if line_type != 'line_no_create': #Para el caso de que no desee crear líneas en las facturas.
-            invoice_line_ids = data_line(self, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
-        # if line_type == 'line_no_create':
-        #     amount_tax_electronic_invoice = 0.0
-        #     amount_total_electronic_invoice = 0.0
+
+        if detalle_servicio is not None:
+
+            lines = detalle_servicio.findall("LineaDetalle")
+
+            account = invoice_import_ids.account_id
+            tax_ids = invoice_import_ids.tax_id
+            journal_id = invoice_import_ids.journal_id.id
+            product_product_id = invoice_import_ids.product_id
+            analytic_id = invoice_import_ids.account_analytic_id
+
+            # Tipo de línea en el detalle del comprobante
+            line_type = invoice_import_ids.line_type
+
+            invoice_line_ids = False
+            if line_type != 'line_no_create': #Para el caso de que no desee crear líneas en las facturas.
+                invoice_line_ids = data_line(self, lines, account, tax_ids, line_type, product_product_id, company, analytic_id)
+
+        elif otros_cargos is not None:
+            lines = root.findall('OtrosCargos')
+            account = invoice_import_ids.account_id
+            journal_id = invoice_import_ids.journal_id.id
+            product_product_id = invoice_import_ids.product_id
+            analytic_id = invoice_import_ids.account_analytic_id
+            # Tipo de línea en el detalle del comprobante
+            line_type = invoice_import_ids.line_type
+            if line_type != 'line_no_create':
+                invoice_line_ids = data_line_otros_cargos(self, lines, account, line_type, product_product_id, company, analytic_id, tax_node,
+                                                          discount_total_node, amount_total_electronic_invoice)
+
+        elif informacion_referencia is not None:
+            lines = root.findall('InformacionReferencia')
+            account = invoice_import_ids.account_id
+            journal_id = invoice_import_ids.journal_id.id
+            product_product_id = invoice_import_ids.product_id
+            analytic_id = invoice_import_ids.account_analytic_id
+            # Tipo de línea en el detalle del comprobante
+            line_type = invoice_import_ids.line_type
+            if line_type != 'line_no_create':
+                invoice_line_ids = data_line_informacion_referencia(self, lines, account, line_type, product_product_id, company, analytic_id, tax_node,
+                                                          discount_total_node, amount_total_electronic_invoice, root, namespaces, factura)
+
+        else:
+            invoice_line_ids = False
 
         if r:
             values = {
@@ -399,6 +433,181 @@ def data_line(self, lines, account, tax_ids, line_type, product_product_id, comp
             'product_uom_id': product_uom,
             'discount': discount_percentage,
             'discount_note': discount_note,
+            'tax_ids': taxes,
+            'total_tax': total_tax,
+            'account_id': account_id,
+            'analytic_account_id': analytic_id.id if analytic_id else False,
+            'info_json': json.dumps(_create_dict(line))
+        }
+        array_lines.append((0, 0, data))
+
+    return array_lines
+
+
+def data_line_otros_cargos(self, lines, account, line_type, product_product_id, company, analytic_id, tax_node, discount_total_node,
+                           amount_total_electronic_invoice):
+    array_lines = []
+
+    descuento_por_linea = 0.0
+    if discount_total_node:
+        if float(discount_total_node[0].text) > 0.0:
+            descuento_por_linea = float(discount_total_node[0].text) / len(lines)
+
+    total_tax = 0.0
+    taxes = self.env["account.tax"]
+    if tax_node:
+        if float(tax_node[0].text) > 0.0:
+            total_tax = total_tax / len(lines)
+            porcentaje_impuesto = float(tax_node[0].text) / float(amount_total_electronic_invoice)
+
+            tax = self.env["account.tax"].sudo().search([("amount", "=", porcentaje_impuesto),
+                                                         ("type_tax_use", "=", "purchase"),
+                                                         ('company_id', '=', company.id)
+                                                         ], limit=1, )
+            if tax:
+                taxes += tax
+
+    for line in lines:
+        type_document = line.find('TipoDocumento').text
+        detalle = line.find('Detalle').text
+        monto_cargo = line.find('MontoCargo').text
+
+        if line_type == 'product_create':
+
+            domain_product = []
+            domain_product.append(('name', 'like', detalle))
+
+            product_find = self.env['product.template'].sudo().search(domain_product, limit=1)
+            if not product_find:
+                dict_p = {'name': detalle,
+                          'purchase_ok': True,
+                          'sale_ok': False,
+                          'cabys_id': False,
+                          'supplier_taxes_id': False
+                          }
+
+                product_find = self.env['product.template'].create(dict_p)
+
+            product_ide = product_find.product_variant_id.id
+        elif line_type == 'product_no_create':
+            pass
+        elif line_type == 'product_default':
+            product_ide = product_product_id.id if product_product_id else False
+        else:
+            pass
+
+        account_id = account.id
+
+        def _create_dict(line):
+            js = {
+                'tipo_documento': line.find('TipoDocumento').text,
+                'numero_identidad_tercero': line.find('NumeroIdentidadTercero').text,
+                'nombre_tercero': line.find('NombreTercero').text,
+                'detalle': line.find('Detalle').text,
+
+            }
+            return js
+
+
+
+        data = {
+            # 'sequence': line.find("NumeroLinea").text,
+            'name': line.find("Detalle").text,
+            'product_id': product_ide,
+            'price_unit': line.find("MontoCargo").text,
+            'quantity': 1,
+            'product_uom_id': False,
+            'discount': descuento_por_linea if descuento_por_linea > 0.0 else False,
+            'discount_note': 'Descuento' if descuento_por_linea > 0.0 else False,
+            'tax_ids': taxes,
+            'total_tax': total_tax,
+            'account_id': account_id,
+            'analytic_account_id': analytic_id.id if analytic_id else False,
+            'info_json': json.dumps(_create_dict(line))
+        }
+        array_lines.append((0, 0, data))
+
+    return array_lines
+
+
+def data_line_informacion_referencia(self, lines, account, line_type, product_product_id, company, analytic_id, tax_node, discount_total_node,
+                           amount_total_electronic_invoice, root, namespaces, factura):
+    array_lines = []
+
+    total_venta_neta = factura.xpath("inv:ResumenFactura/inv:TotalVentaNeta", namespaces=namespaces)[0].text
+    precio_por_linea = 1
+    if total_venta_neta:
+        if float(total_venta_neta) > 0.0:
+            precio_por_linea = float(total_venta_neta) / len(lines)
+
+
+    descuento_por_linea = 0.0
+    if discount_total_node:
+        if float(discount_total_node[0].text) > 0.0:
+            descuento_por_linea = float(discount_total_node[0].text) / len(lines)
+
+    total_tax = 0.0
+    taxes = self.env["account.tax"]
+    if tax_node:
+        if float(tax_node[0].text) > 0.0:
+            total_tax = float(tax_node[0].text) / len(lines)
+            porcentaje_impuesto = round(float(tax_node[0].text) / float(amount_total_electronic_invoice),2)
+            tax = self.env["account.tax"].sudo().search([("amount", "=", porcentaje_impuesto),
+                                                         ("type_tax_use", "=", "purchase"),
+                                                         ('company_id', '=', company.id)
+                                                         ], limit=1, )
+            if tax:
+                taxes += tax
+
+    for line in lines:
+        razon = line.find('Razon').text
+
+        if line_type == 'product_create':
+
+            domain_product = []
+            domain_product.append(('name', 'like', razon))
+
+            product_find = self.env['product.template'].sudo().search(domain_product, limit=1)
+            if not product_find:
+                dict_p = {'name': razon,
+                          'purchase_ok': True,
+                          'sale_ok': False,
+                          'cabys_id': False,
+                          'supplier_taxes_id': False
+                          }
+
+                product_find = self.env['product.template'].create(dict_p)
+
+            product_ide = product_find.product_variant_id.id
+        elif line_type == 'product_no_create':
+            pass
+        elif line_type == 'product_default':
+            product_ide = product_product_id.id if product_product_id else False
+        else:
+            pass
+
+        account_id = account.id
+
+        def _create_dict(line):
+            js = {
+                'tipo_documento': line.find('TipoDoc').text,
+                'numero': line.find('Numero').text,
+                'fecha_emision': line.find('FechaEmision').text,
+                'codigo': line.find('Codigo').text,
+                'razon': line.find('Razon').text,
+
+            }
+            return js
+
+        data = {
+            # 'sequence': line.find("NumeroLinea").text,
+            'name': line.find("Razon").text,
+            'product_id': product_ide,
+            'price_unit': precio_por_linea,
+            'quantity': 1,
+            'product_uom_id': False,
+            'discount': descuento_por_linea if descuento_por_linea > 0.0 else False,
+            'discount_note': 'Descuento' if descuento_por_linea > 0.0 else False,
             'tax_ids': taxes,
             'total_tax': total_tax,
             'account_id': account_id,

@@ -23,10 +23,14 @@
 
             <xpath expr="//button[@name='button_draft']" position="attributes">
                 <attribute name="attrs">
-                   {'invisible' : ['|',('show_reset_to_draft_button', '=', False),
-                    '&amp;', ('move_type','!=','entry'),
-                    '|',('state_tributacion','=','aceptado'),('state_send_invoice','=','aceptado')]}
+                   {'invisible' : [ '|',('show_reset_to_draft_button', '=', False),('state','=','draft')]}
                 </attribute>
+               <!-- <attribute name="attrs">
+                   {'invisible' : [
+                    '|',('show_reset_to_draft_button', '=', False),
+                    '|',('state_tributacion','=','aceptado'),('state_send_invoice','=','aceptado')
+                    ]}
+                </attribute>-->
             </xpath>
             <xpath expr="//sheet" position="before">
                 <div class="alert alert-success text-center o_form_header"
