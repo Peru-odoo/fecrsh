@@ -129,9 +129,10 @@ class AccountInvoice(models.Model):
                 invoice.company_id.frm_ws_ambiente and invoice.journal_id.to_process
             )
 
-    metodo_pago_partner = fields.Many2one("payment.methods", related='partner_id.payment_methods_id', compute='_compute_payment_methods', string='Mét.pago.partner')
+    metodo_pago_partner = fields.Many2one("payment.methods", related='partner_id.payment_methods_id')
+    payment_method_id = fields.Many2one("payment.methods", string=u'Método de Pago', store=True)
+    payment_method_different_is = fields.Boolean(compute='_compute_payment_method_different_is')
 
-    payment_method_id = fields.Many2one("payment.methods", string=u'Método de Pago', readonly=False, store=True)
 
     _sql_constraints = [
         (
@@ -143,20 +144,21 @@ class AccountInvoice(models.Model):
 
     state_email = fields.Selection(selection=STATE_EMAIL, copy=False)
 
+    @api.depends('metodo_pago_partner','partner_id', 'payment_method_id')
+    def _compute_payment_method_different_is(self):
+        for record in self:
+            payment_method_different_is = False
+            if record.metodo_pago_partner or record.payment_method_id:
+                if record.metodo_pago_partner != record.payment_method_id:
+                    payment_method_different_is = True
 
-    def cal_payment_method(self):
-        if self.metodo_pago_partner:
-            self.payment_method_id = self.metodo_pago_partner
-        elif self.payment_method_id:
-            self.payment_method_id = self.payment_method_id
-        elif len(self.partner_id.payment_methods_id) > 0:
-            self.payment_method_id = self.partner_id.payment_methods_id
-        else:
-            self.payment_method_id = False
+            record.payment_method_different_is = payment_method_different_is
 
-    @api.depends('partner_id', 'partner_id.payment_methods_id')
-    def _compute_payment_methods(self):
-        self.cal_payment_method()
+    def assign_payment_method_different_partner(self):
+        for record in self:
+            if record.partner_id.payment_methods_id:
+                record.payment_method_id = record.partner_id.payment_methods_id
+                record.payment_method_different_is = False
 
     #
     # @api.onchange('partner_id', 'partner_id.payment_methods_id')

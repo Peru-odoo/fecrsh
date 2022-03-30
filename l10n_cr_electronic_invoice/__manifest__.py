@@ -1,6 +1,6 @@
 {
     "name": "FECR",
-    "version": "14.0.7.9",
+    "version": "14.0.8.0",
     "category": "Accounting",
     "summary": "Factura electrónica para Costa Rica",
     "author": "XALACHI",

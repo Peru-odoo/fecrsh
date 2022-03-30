@@ -130,7 +130,14 @@
             </xpath>
 
             <xpath expr="//label[@for='journal_id']" position="before">
-                <field name="payment_method_id" attrs="{'invisible': [('move_type','=','entry')], 'required': [('move_type','!=','entry')]}"/>
+                <label for="payment_method_id" string="Método de pago"/>
+                <div>
+                    <field name="payment_method_different_is" invisible="1"/>
+                    <field name="payment_method_id" class="oe_inline"/>
+                    <button type='object' class="fa fa-arrow-right oe_link oe_inline" name="assign_payment_method_different_partner"
+                            string="Asignar el del partner" attrs="{'invisible':[('payment_method_different_is','=',False)]}"/>
+                </div>
+<!--                <field name="payment_method_id" attrs="{'invisible': [('move_type','=','entry')], 'required': [('move_type','!=','entry')]}"/>-->
             </xpath>
 
             <xpath expr="(//field[@name='amount_total'])[last()]" position="after">
