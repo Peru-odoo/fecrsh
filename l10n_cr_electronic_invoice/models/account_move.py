@@ -888,38 +888,39 @@ class AccountInvoice(models.Model):
         return res
 
     def _generate_sequence(self):
-        if self.to_process and self.tipo_documento not in ('NN',False):
-            self.validations()
-            invoice = self
-            res = invoice._get_sequence()
-            if not invoice.electronic_sequence:
-                invoice.electronic_sequence = cr_edi.utils.compute_full_sequence(
-                    branch= res[3],
-                    terminal=res[2],
-                    doc_type=res[1],
-                    sequence=res[0].next_by_id(),
-                )
-            if not(self.move_type in ('in_invoice','in_refund') and self.from_mail and self.state_send_invoice) and not self.number_electronic:
-                #not(not self.state_send_invoice and self.move_type in ('in_invoice') and self.from_mail and self.number_electronic):
-                invoice.number_electronic = cr_edi.utils.get_number_electronic(
-                    issuer=invoice.company_id,
-                    full_sequence=invoice.electronic_sequence,
-                )
-            invoice.seq_store = res[0]
-            invoice._get_new_name()
-            #invoice.name = invoice.electronic_sequence
-            invoice.state_send_invoice = False  # TODO why
-        elif self.move_type in ('out_invoice','out_refund','in_invoice','in_refund'):
-            prefix = self.journal_id.code
-            if self.move_type in ('out_invoice','in_invoice'):
-                seq = self.journal_id.sequence_id.next_by_id()
-                name = prefix
-            else:
-                name = 'R' + prefix
-                seq = self.journal_id.sequence_refund_id.next_by_id()
-            new_name = name + '-' + seq
-            self.name = new_name
-            self.payment_reference = self.name
+        for record in self:
+            if record.to_process and record.tipo_documento not in ('NN',False):
+                record.validations()
+                invoice = record
+                res = invoice._get_sequence()
+                if not invoice.electronic_sequence:
+                    invoice.electronic_sequence = cr_edi.utils.compute_full_sequence(
+                        branch= res[3],
+                        terminal=res[2],
+                        doc_type=res[1],
+                        sequence=res[0].next_by_id(),
+                    )
+                if not(record.move_type in ('in_invoice','in_refund') and record.from_mail and record.state_send_invoice) and not record.number_electronic:
+                    #not(not self.state_send_invoice and self.move_type in ('in_invoice') and self.from_mail and self.number_electronic):
+                    invoice.number_electronic = cr_edi.utils.get_number_electronic(
+                        issuer=invoice.company_id,
+                        full_sequence=invoice.electronic_sequence,
+                    )
+                invoice.seq_store = res[0]
+                invoice._get_new_name()
+                #invoice.name = invoice.electronic_sequence
+                invoice.state_send_invoice = False  # TODO why
+            elif record.move_type in ('out_invoice','out_refund','in_invoice','in_refund'):
+                prefix = record.journal_id.code
+                if record.move_type in ('out_invoice','in_invoice'):
+                    seq = record.journal_id.sequence_id.next_by_id()
+                    name = prefix
+                else:
+                    name = 'R' + prefix
+                    seq = record.journal_id.sequence_refund_id.next_by_id()
+                new_name = name + '-' + seq
+                record.name = new_name
+                record.payment_reference = record.name
 
 
     def _get_new_name(self):
